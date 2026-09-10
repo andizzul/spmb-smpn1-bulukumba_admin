@@ -1206,7 +1206,9 @@ function bukaHalaman(pageId) {
   // Load data pendaftar asli dari spreadsheet
   if(pageId === 'data-pendaftar') { loadDataPendaftarAsli(); }
   // Load rekap jalur asli dari spreadsheet
-  if(pageId === 'rekap-jalur') { loadRekapJalurAsli(); }
+  // (loadKuota() dipanggil juga di sini agar kolom Kuota/Sisa Kuota/Status
+  // tidak bergantung pada halaman Dashboard yang mungkin belum selesai memuat)
+  if(pageId === 'rekap-jalur') { loadKuota(); loadRekapJalurAsli(); }
   
   // Tutup sidebar di mobile setelah klik menu
   if(window.innerWidth < 768) {
@@ -1432,14 +1434,30 @@ function handleDashboardData(data) {
 }
 
 function muatSemuaData() {
+  var listTerbaruAwal = document.getElementById('list-terbaru');
+  if (listTerbaruAwal) {
+    listTerbaruAwal.innerHTML = '<div style="text-align:center;padding:32px 0;color:#aaa;font-size:.85rem">'
+      + '<i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>';
+  }
+  // Panggil loadKuota() & muatDistribusiUsia() secara paralel (tidak menunggu
+  // getDashboardData selesai), supaya widget kuota & usia tidak ikut macet
+  // kalau panggilan dashboard gabungan sedang lambat.
+  loadKuota();
+  muatDistribusiUsia();
+
   try {
     google.script.run
       .withSuccessHandler(function(data) {
         handleDashboardData(data);
-        muatDistribusiUsia();
       })
       .withFailureHandler(function(e) {
         console.error('Gagal memuat dashboard:', e);
+        var list = document.getElementById('list-terbaru');
+        if (list) {
+          list.innerHTML = '<div style="text-align:center;padding:32px 0;color:#c0392b;font-size:.85rem">'
+            + '<i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>'
+            + 'Gagal memuat data. Coba buka ulang halaman Dashboard.</div>';
+        }
       })
       .getDashboardData();
   } catch(e) {
