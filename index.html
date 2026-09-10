@@ -1412,6 +1412,20 @@ function konfirmasiLogout() {
 // ═══════════════════════════════════════════════════════════════
 function handleDashboardData(data) {
   if (!data) return;
+  if (data.__error) {
+    console.error('adminGetDashboardData_ error:', data.__error);
+    var listErr = document.getElementById('list-terbaru');
+    if (listErr) {
+      listErr.innerHTML = '<div style="text-align:center;padding:32px 0;color:#c0392b;font-size:.85rem">'
+        + '<i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>'
+        + 'Error server: ' + data.__error + '</div>';
+    }
+    var usiaLoadingErr = document.getElementById('usiaDist-loading');
+    if (usiaLoadingErr) usiaLoadingErr.style.display = 'none';
+    var usiaEmptyErr = document.getElementById('usiaDist-empty');
+    if (usiaEmptyErr) usiaEmptyErr.style.display = 'block';
+    return;
+  }
   handleJumlahPerJalur(data.jumlah);
   handleStatusPendaftaran(data.statusPendaftaran);
   handleStatusPengumuman(data.statusPengumuman);
