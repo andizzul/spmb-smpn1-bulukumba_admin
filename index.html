@@ -54,11 +54,12 @@
   }
   function makeRunner() {
     var success = null, failure = null;
+    var proxy; // dideklarasikan lebih dulu supaya bisa dirujuk oleh runner di bawah
     var runner = {
-      withSuccessHandler: function (fn) { success = fn; return runner; },
-      withFailureHandler: function (fn) { failure = fn; return runner; }
+      withSuccessHandler: function (fn) { success = fn; return proxy; },
+      withFailureHandler: function (fn) { failure = fn; return proxy; }
     };
-    return new Proxy(runner, {
+    proxy = new Proxy(runner, {
       get: function (target, prop) {
         if (prop in target) return target[prop];
         return function () {
@@ -77,6 +78,7 @@
         };
       }
     });
+    return proxy;
   }
   window.google = { script: { run: makeRunner() } };
 })();
