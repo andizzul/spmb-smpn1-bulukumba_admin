@@ -1431,6 +1431,39 @@ function handleDashboardData(data) {
     });
     hitungKuotaOtomatis();
   }
+  // Rekap Usia Pendaftar: dirender langsung dari data yang sudah dibawa bersama
+  // getDashboardData (tidak perlu lagi 2 request tambahan getUsiaMaksimal + getDataPendaftar).
+  // Logika hitung usia di usiaDist_hitungUsia() tetap sama persis seperti sebelumnya.
+  if (data.usia) {
+    var tglAcuan = data.usia.tglAcuan || null;
+    window._globalTglAcuan = tglAcuan;
+    var pdp = document.getElementById('page-data-pendaftar');
+    if (pdp && pdp.classList.contains('d-none') === false) {
+      renderTabelPendaftar();
+    }
+    var rows = data.usia.rows || [];
+    if (!rows.length) {
+      renderDistribusiUsia(null, tglAcuan, 0);
+    } else {
+      var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
+      rows.forEach(function(r) {
+        var tglLahirStr = '';
+        if (r.ttl) {
+          var ci = String(r.ttl).lastIndexOf(',');
+          tglLahirStr = ci !== -1 ? String(r.ttl).substring(ci + 1).trim() : '';
+        }
+        var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
+        if (usia === null) return;
+        if      (usia < 12)  distribusi.bawah12++;
+        else if (usia === 12) distribusi.usia12++;
+        else if (usia === 13) distribusi.usia13++;
+        else if (usia === 14) distribusi.usia14++;
+        else if (usia === 15) distribusi.usia15++;
+        else                  distribusi.atas15++;
+      });
+      renderDistribusiUsia(distribusi, tglAcuan, rows.length);
+    }
+  }
 }
 
 function muatSemuaData() {
@@ -1439,11 +1472,10 @@ function muatSemuaData() {
     listTerbaruAwal.innerHTML = '<div style="text-align:center;padding:32px 0;color:#aaa;font-size:.85rem">'
       + '<i class="fa-solid fa-spinner fa-spin"></i> Memuat data...</div>';
   }
-  // Panggil loadKuota() & muatDistribusiUsia() secara paralel (tidak menunggu
-  // getDashboardData selesai), supaya widget kuota & usia tidak ikut macet
-  // kalau panggilan dashboard gabungan sedang lambat.
-  loadKuota();
-  muatDistribusiUsia();
+  var usiaLoadingAwal = document.getElementById('usiaDist-loading');
+  var usiaContentAwal = document.getElementById('usiaDist-content');
+  if (usiaLoadingAwal) usiaLoadingAwal.style.display = 'block';
+  if (usiaContentAwal) usiaContentAwal.style.display = 'none';
 
   try {
     google.script.run
@@ -1458,6 +1490,9 @@ function muatSemuaData() {
             + '<i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>'
             + 'Gagal memuat data. Coba buka ulang halaman Dashboard.</div>';
         }
+        if (usiaLoadingAwal) usiaLoadingAwal.style.display = 'none';
+        var usiaEmpty = document.getElementById('usiaDist-empty');
+        if (usiaEmpty) usiaEmpty.style.display = 'block';
       })
       .getDashboardData();
   } catch(e) {
