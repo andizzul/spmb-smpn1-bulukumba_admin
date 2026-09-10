@@ -14,7 +14,7 @@
 /* Vercel ↔ Google Apps Script bridge. Keeps the existing admin code intact. */
 (function () {
   if (window.google && window.google.script && window.google.script.run) return;
-  var GAS_API_URL = window.SPMB_GAS_API_URL || 'REPLACE_WITH_GAS_WEB_APP_URL';
+  var GAS_API_URL = window.SPMB_GAS_API_URL || 'https://script.google.com/macros/s/AKfycbyEufeBCjzYi7sm1AMt7Hcoj5oJ-2fjYl9_4lbKSx_l84U0oyH7LKX7pBt1lUmwMRNY/exec';
   var ADMIN_MAP = {
     getLoginData: 'adminGetLoginData',
     loginAdmin: 'adminLogin',
