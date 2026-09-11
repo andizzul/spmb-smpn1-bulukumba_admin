@@ -1228,67 +1228,6 @@ function toggleSidebar() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  CHART — 7 HARI TERAKHIR
-// ═══════════════════════════════════════════════════════════════
-var chartTrenInstance = null;
-
-function muat7HariChart(data7Hari) {
-  var labels = [];
-  var values = [];
-
-  if(data7Hari && Array.isArray(data7Hari)) {
-    // Data dari GAS
-    data7Hari.forEach(function(d) { labels.push(d.tanggal); values.push(d.jumlah); });
-  } else {
-    // Placeholder sementara
-    var today = new Date();
-    for(var i = 6; i >= 0; i--) {
-      var d = new Date(today); d.setDate(today.getDate() - i);
-      labels.push(d.toLocaleDateString('id-ID',{day:'numeric',month:'short'}));
-      values.push(0);
-    }
-  }
-
-  var ctx = document.getElementById('chartTren').getContext('2d');
-  if(chartTrenInstance) chartTrenInstance.destroy();
-  chartTrenInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Pendaftar',
-        data: values,
-        backgroundColor: 'rgba(59,130,246,0.75)',
-        borderColor: '#1d4ed8',
-        borderWidth: 1.5,
-        borderRadius: 5,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) { return ' ' + ctx.parsed.y + ' pendaftar'; }
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1, font: { size: 11 } },
-          grid: { color: 'rgba(0,0,0,.06)' }
-        },
-        x: { ticks: { font: { size: 11 } }, grid: { display: false } }
-      }
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
 //  INTEGRASI GOOGLE APPS SCRIPT
 // ═══════════════════════════════════════════════════════════════
 
@@ -1305,6 +1244,7 @@ function handleJumlahPerJalur(data) {
 }
 
 function handleStatusPendaftaran(status) {
+  status = (status && typeof status === 'object' && status.status !== undefined) ? status.status : status;
   var on = (String(status).toLowerCase() === 'buka');
   var badgeDash  = document.getElementById('status-pendaftaran-badge');
   var badgePgtr  = document.getElementById('status-pgtr-pendaftaran');
@@ -1344,28 +1284,12 @@ function handlePendaftarTerbaru(terbaru) {
   }).join('');
 }
 
-function handleTrenTerbaru(data) {
-  if(data && data.chart) muat7HariChart(data.chart);
-  if(data && data.terbaru && Array.isArray(data.terbaru)) {
-    var list = document.getElementById('list-terbaru');
-    var BADGE = { domisili:'badge-domisili', prestasi:'badge-prestasi', afirmasi:'badge-afirmasi', mutasi:'badge-mutasi' };
-    list.innerHTML = data.terbaru.slice(0, 5).map(function(d) {
-      var jalurKey = (d.jalur||'').toLowerCase();
-      var badgeCls = BADGE[jalurKey] || 'badge-domisili';
-      return '<div class="activity-row">' +
-             '<div><div class="act-id">' + (d.kode||'-') + '</div>' +
-             '<div class="act-name">' + (d.nama||'-') + '</div></div>' +
-             '<span class="badge-jalur ' + badgeCls + '">' + (d.jalur||'-') + '</span>' +
-             '</div>';
-    }).join('');
-  }
-}
-
 function ubahStatusPendaftaran(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pendaftaran?')) return;
+  handleStatusPendaftaran(status);
   try {
     google.script.run
-      .withSuccessHandler(function() { muatSemuaData(); })
+      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); }, 2000); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
       .setStatusPendaftaran(status);
   } catch(e) { handleStatusPendaftaran(status); }
@@ -2322,101 +2246,6 @@ function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
     contentEl.style.display = 'block';
   }
   if (emptyEl) emptyEl.style.display = 'none';
-}
-
-// Muat distribusi usia: ambil data pendaftar + pengaturan usia, hitung di client
-function muatDistribusiUsia() {
-  var loadingEl = document.getElementById('usiaDist-loading');
-  var contentEl = document.getElementById('usiaDist-content');
-  if (loadingEl) loadingEl.style.display = 'block';
-  if (contentEl) contentEl.style.display = 'none';
-
-  try {
-    // Ambil pengaturan usia (B9 = usia maks, B10 = tgl acuan)
-    google.script.run
-      .withSuccessHandler(function(pengaturan) {
-        var tglAcuan   = (pengaturan && pengaturan.tglAcuan)  ? pengaturan.tglAcuan  : null;
-        var usiaMaks   = (pengaturan && pengaturan.usiaMaks)  ? parseInt(pengaturan.usiaMaks, 10) : null;
-
-        // REVISI USIA: Simpan tglAcuan di background memori agar bisa dipanggil oleh tabel
-        window._globalTglAcuan = tglAcuan;
-        
-        // Refresh tabel secara diam-diam jika pengguna sedang membuka layar Data Pendaftar
-        if (document.getElementById('page-data-pendaftar').classList.contains('d-none') === false) {
-           renderTabelPendaftar();
-        }
-
-        // Ambil data pendaftar (sudah ada fungsi getDataPendaftar)
-        google.script.run
-          .withSuccessHandler(function(dataPendaftar) {
-            if (!dataPendaftar || dataPendaftar.length === 0) {
-              renderDistribusiUsia(null, tglAcuan, 0);
-              return;
-            }
-
-            var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
-
-            dataPendaftar.forEach(function(r) {
-              // ttl = "TmpLahir, YYYY-MM-DD" atau "TmpLahir, M/D/YYYY"
-              var tglLahirStr = '';
-              if (r.ttl) {
-                var ci = String(r.ttl).lastIndexOf(',');
-                tglLahirStr = ci !== -1 ? String(r.ttl).substring(ci + 1).trim() : '';
-              }
-              var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
-              if (usia === null) return;
-
-              if      (usia < 12)  distribusi.bawah12++;
-              else if (usia === 12) distribusi.usia12++;
-              else if (usia === 13) distribusi.usia13++;
-              else if (usia === 14) distribusi.usia14++;
-              else if (usia === 15) distribusi.usia15++;
-              else                  distribusi.atas15++;
-            });
-
-            renderDistribusiUsia(distribusi, tglAcuan, dataPendaftar.length);
-          })
-          .withFailureHandler(function() {
-            renderDistribusiUsia(null, tglAcuan, 0);
-          })
-          .getDataPendaftar();
-      })
-      .withFailureHandler(function() {
-        // Gagal ambil pengaturan, tetap tampilkan tanpa acuan
-        google.script.run
-          .withSuccessHandler(function(dataPendaftar) {
-            if (!dataPendaftar || dataPendaftar.length === 0) {
-              renderDistribusiUsia(null, null, 0);
-              return;
-            }
-            var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
-            var today = new Date();
-            dataPendaftar.forEach(function(r) {
-              var tglLahirStr = '';
-              if (r.ttl) {
-                var ci = String(r.ttl).lastIndexOf(',');
-                tglLahirStr = ci !== -1 ? String(r.ttl).substring(ci + 1).trim() : '';
-              }
-              var usia = usiaDist_hitungUsia(tglLahirStr, null);
-              if (usia === null) return;
-              if      (usia < 12)  distribusi.bawah12++;
-              else if (usia === 12) distribusi.usia12++;
-              else if (usia === 13) distribusi.usia13++;
-              else if (usia === 14) distribusi.usia14++;
-              else if (usia === 15) distribusi.usia15++;
-              else                  distribusi.atas15++;
-            });
-            renderDistribusiUsia(distribusi, null, dataPendaftar.length);
-          })
-          .withFailureHandler(function() { renderDistribusiUsia(null, null, 0); })
-          .getDataPendaftar();
-      })
-      .getUsiaMaksimal();
-  } catch(e) {
-    // Fallback di luar GAS
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (document.getElementById('usiaDist-empty')) document.getElementById('usiaDist-empty').style.display = 'block';
-  }
 }
 
 // ─── Fungsi untuk halaman Pengaturan Usia Maksimal ────────────
