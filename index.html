@@ -2061,6 +2061,7 @@ function prosesLoginAdmin() {
           var ls = document.getElementById('login-screen');
           ls.classList.add('hide-login');
           document.body.classList.remove('needs-login');
+          muatSemuaData();
           ls.addEventListener('transitionend', function() { ls.style.display = 'none'; }, { once: true });
         } else {
           errBox.textContent = 'Jabatan atau password salah. Coba lagi.';
