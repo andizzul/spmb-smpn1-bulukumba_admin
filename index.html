@@ -1056,8 +1056,8 @@
         <div class="panel-body">
           <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
           <div id="status-pgtr-pengumuman" class="mb-3"><span class="status-off">Memuat...</span></div>
-          <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Tampilkan Pengumuman</button>
-          <button class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Sembunyikan Pengumuman</button>
+          <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
+          <button class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
         </div>
       </div>
     </div>
@@ -1259,8 +1259,8 @@ function handleStatusPengumuman(status) {
   var on = (String(status).toLowerCase() === 'buka');
   var el = document.getElementById('status-pgtr-pengumuman');
   if(el) el.innerHTML = on
-    ? '<span class="status-on"><i class="fa-solid fa-circle-check me-1"></i>DITAMPILKAN</span>'
-    : '<span class="status-off"><i class="fa-solid fa-circle-xmark me-1"></i>DISEMBUNYIKAN</span>';
+    ? '<span class="status-on"><i class="fa-solid fa-circle-check me-1"></i>DIBUKA</span>'
+    : '<span class="status-off"><i class="fa-solid fa-circle-xmark me-1"></i>DITUTUP</span>';
 }
 
 function handlePendaftarTerbaru(terbaru) {
@@ -1296,10 +1296,11 @@ function ubahStatusPendaftaran(status) {
 }
 
 function ubahStatusPengumuman(status) {
-  if(!confirm('Yakin ingin ' + (status==='Buka'?'MENAMPILKAN':'MENYEMBUNYIKAN') + ' pengumuman?')) return;
+  if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pengumuman?')) return;
+  handleStatusPengumuman(status);
   try {
     google.script.run
-      .withSuccessHandler(function() { muatSemuaData(); })
+      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); }, 2000); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
       .setStatusPengumuman(status);
   } catch(e) { handleStatusPengumuman(status); }
@@ -1549,7 +1550,7 @@ var BADGE_CLS = { Domisili:'badge-domisili', Prestasi:'badge-prestasi', Afirmasi
 var currentPage = 1;
 var itemsPerPage = 10;
 
-function loadDataPendaftarAsli() {
+function loadDataPendaftarAsli(retry) {
   var tbody = document.getElementById('dp-tbody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memuat data pendaftar dari sistem...</td></tr>';
   
@@ -1565,10 +1566,12 @@ function loadDataPendaftarAsli() {
         filterDataPendaftar();
       })
       .withFailureHandler(function(e) {
+        if (!retry) { setTimeout(function() { loadDataPendaftarAsli(true); }, 800); return; }
         if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger py-4">Gagal memuat data: ' + e + '</td></tr>';
       })
       .getDataPendaftar();
   } catch(e) {
+    if (!retry) { setTimeout(function() { loadDataPendaftarAsli(true); }, 800); return; }
     if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger py-4">Sistem sedang memuat...</td></tr>';
   }
 }
@@ -2316,6 +2319,7 @@ function simpanUsiaMaksimal() {
 //  INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('login-screen').style.display = 'none';
   var token = sessionStorage.getItem('adminToken');
   if (token) {
     google.script.run
@@ -2332,6 +2336,7 @@ document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.removeItem('adminLoggedIn');
           sessionStorage.removeItem('adminNama');
           sessionStorage.removeItem('adminToken');
+          document.getElementById('login-screen').style.display = '';
           bukaHalaman('dashboard');
           muatDataLogin();
         }
@@ -2340,11 +2345,13 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.removeItem('adminLoggedIn');
         sessionStorage.removeItem('adminNama');
         sessionStorage.removeItem('adminToken');
+        document.getElementById('login-screen').style.display = '';
         bukaHalaman('dashboard');
         muatDataLogin();
       })
       .validateAdminSession(token);
   } else {
+    document.getElementById('login-screen').style.display = '';
     bukaHalaman('dashboard');
     muatDataLogin();
   }
