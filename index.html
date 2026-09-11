@@ -1202,7 +1202,7 @@ function bukaHalaman(pageId) {
   // Load usia maksimal saat halaman pengaturan-usia dibuka
   if(pageId === 'pengaturan-usia') { loadUsiaMaksimal(); }
   // Auto-refresh dashboard setiap kali dibuka
-  if(pageId === 'dashboard') { muatSemuaData(); }
+  if(pageId === 'dashboard' && sessionStorage.getItem('adminLoggedIn') === '1') { muatSemuaData(); }
   // Load data pendaftar asli dari spreadsheet
   if(pageId === 'data-pendaftar') { loadDataPendaftarAsli(); }
   // Load rekap jalur asli dari spreadsheet
