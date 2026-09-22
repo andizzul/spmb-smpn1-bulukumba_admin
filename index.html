@@ -1380,13 +1380,10 @@ function handleDashboardData(data) {
       renderTabelPendaftar();
     }
     var rows = data.usia.rows || [];
-    var usiaMaks = parseInt(data.usia.usiaMaks, 10);
-    if (isNaN(usiaMaks)) usiaMaks = 15;
-    var batasBawah = usiaMaks - 3;
     if (!rows.length) {
-      renderDistribusiUsia(null, tglAcuan, 0, usiaMaks);
+      renderDistribusiUsia(null, tglAcuan, 0);
     } else {
-      var distribusi = { bawah:0, thn0:0, thn1:0, thn2:0, thn3:0, atas:0 };
+      var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
       rows.forEach(function(r) {
         var tglLahirStr = '';
         if (r.ttl) {
@@ -1395,14 +1392,14 @@ function handleDashboardData(data) {
         }
         var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
         if (usia === null) return;
-        if      (usia < batasBawah)       distribusi.bawah++;
-        else if (usia === batasBawah)     distribusi.thn0++;
-        else if (usia === batasBawah + 1) distribusi.thn1++;
-        else if (usia === batasBawah + 2) distribusi.thn2++;
-        else if (usia === usiaMaks)       distribusi.thn3++;
-        else                               distribusi.atas++;
+        if      (usia < 12)  distribusi.bawah12++;
+        else if (usia === 12) distribusi.usia12++;
+        else if (usia === 13) distribusi.usia13++;
+        else if (usia === 14) distribusi.usia14++;
+        else if (usia === 15) distribusi.usia15++;
+        else                  distribusi.atas15++;
       });
-      renderDistribusiUsia(distribusi, tglAcuan, rows.length, usiaMaks);
+      renderDistribusiUsia(distribusi, tglAcuan, rows.length);
     }
   }
 }
@@ -1674,7 +1671,7 @@ function renderTabelPendaftar() {
 
     return '<tr>' +
       '<td class="text-center">' + realIdx + '</td>' +
-      '<td><strong>' + r.nama + '</strong></td>' +
+      '<td><strong>' + r.nama + '</strong> <button class="btn btn-outline-secondary btn-sm" style="padding:0px 6px;font-size:.7rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
       '<td class="text-center">' + r.lp + '</td>' +
       '<td>' + r.nisn + '</td>' +
       '<td style="font-size:.78rem">' + r.nik + '</td>' +
@@ -1744,6 +1741,39 @@ function lihatStatusPendaftar(filteredIdx) {
   if (modalEl && window.bootstrap) {
     var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+  }
+}
+
+// Menampilkan modal Biodata Pendaftar (tombol ikon kartu-identitas di kolom Nama)
+function lihatBiodataPendaftar(filteredIdx) {
+  var r = _dpFiltered[filteredIdx];
+  if (!r) return;
+
+  var setTxt = function(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = (val && String(val).trim()) ? val : '-';
+  };
+
+  setTxt('mbp-nama', r.nama);
+  setTxt('mbp-lp', r.lp);
+  setTxt('mbp-nisn', r.nisn);
+  setTxt('mbp-ttl', formatTtlAdmin(r.ttl));
+  setTxt('mbp-agama', r.agama);
+  setTxt('mbp-alamat', r.alamat);
+  setTxt('mbp-ayah', r.ayah);
+  setTxt('mbp-statusayah', r.statusAyah);
+  setTxt('mbp-pekerjaanayah', r.pekerjaanAyah);
+  setTxt('mbp-ibu', r.ibu);
+  setTxt('mbp-statusibu', r.statusIbu);
+  setTxt('mbp-pekerjaanibu', r.pekerjaanIbu);
+  setTxt('mbp-nohp', r.noHp);
+  setTxt('mbp-sekolah', r.sekolah);
+  setTxt('mbp-jalur', r.jalur);
+
+  var modalBiodataEl = document.getElementById('modalBiodataPendaftar');
+  if (modalBiodataEl && window.bootstrap) {
+    var modalBiodata = bootstrap.Modal.getOrCreateInstance(modalBiodataEl);
+    modalBiodata.show();
   }
 }
 
@@ -2195,7 +2225,7 @@ function usiaDist_hitungUsia(tglLahirStr, tglAcuanStr) {
 }
 
 // Render distribusi usia ke widget dashboard
-function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar, usiaMaks) {
+function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
   var contentEl  = document.getElementById('usiaDist-content');
   var loadingEl  = document.getElementById('usiaDist-loading');
   var emptyEl    = document.getElementById('usiaDist-empty');
@@ -2217,16 +2247,14 @@ function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar, usiaMaks) {
     }
   }
 
-  // REVISI: kategori & warna mengikuti Usia Maksimal (Pengaturan > Usia Maksimal), bukan angka tetap
-  if (!usiaMaks) usiaMaks = 15;
-  var batasBawah = usiaMaks - 3;
+  // REVISI WARNA: 'warn' diubah menjadi teks kelas warna agar bisa 3 tingkat
   var categories = [
-    { label: '< ' + batasBawah + ' Thn', key: 'bawah', colorClass: 'usiaDist-bar-normal' },
-    { label: batasBawah + ' Tahun', key: 'thn0',  colorClass: 'usiaDist-bar-normal' },
-    { label: (batasBawah + 1) + ' Tahun', key: 'thn1',  colorClass: 'usiaDist-bar-normal' },
-    { label: (batasBawah + 2) + ' Tahun', key: 'thn2',  colorClass: 'usiaDist-bar-normal' },
-    { label: usiaMaks + ' Tahun', key: 'thn3',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
-    { label: '> ' + usiaMaks + ' Thn', key: 'atas',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
+    { label: '< 12 Thn', key: 'bawah12', colorClass: 'usiaDist-bar-normal' },
+    { label: '12 Tahun', key: 'usia12',  colorClass: 'usiaDist-bar-normal' },
+    { label: '13 Tahun', key: 'usia13',  colorClass: 'usiaDist-bar-normal' },
+    { label: '14 Tahun', key: 'usia14',  colorClass: 'usiaDist-bar-normal' },
+    { label: '15 Tahun', key: 'usia15',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
+    { label: '> 15 Thn', key: 'atas15',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
   ];
 
   var maxVal = 0;
@@ -2376,6 +2404,40 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="mb-2" style="font-size:.85rem"><span class="text-muted">Nama Pendaftar:</span> <span id="msp-nama" class="fw-bold"></span></div>
         <div class="mb-3" style="font-size:.85rem"><span class="text-muted">Status Isian:</span> <span id="msp-status-badge"></span></div>
         <div id="msp-aksi-area"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PENAMBAHAN FITUR: MODAL BIODATA PENDAFTAR (tombol kartu-identitas di kolom Nama - Data Pendaftar)
+     ═══════════════════════════════════════════════ -->
+<div class="modal fade" id="modalBiodataPendaftar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:460px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-id-card text-primary"></i> Biodata Pendaftar</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nama"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jenis Kelamin</div><div class="fw-bold" style="font-size:.88rem" id="mbp-lp"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">NISN</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nisn"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Tempat/Tgl Lahir</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ttl"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Agama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-agama"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Alamat</div><div class="fw-bold" style="font-size:.88rem" id="mbp-alamat"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ayah"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Status Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-statusayah"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanayah"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ibu"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Status Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-statusibu"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanibu"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nomor HP</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nohp"></div></div>
+        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Asal Sekolah</div><div class="fw-bold" style="font-size:.88rem" id="mbp-sekolah"></div></div>
+        <div class="mb-0" style="font-size:.88rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jalur Pendaftaran</div><div class="fw-bold" id="mbp-jalur"></div></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
