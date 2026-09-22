@@ -1381,10 +1381,13 @@ function handleDashboardData(data) {
       renderTabelPendaftar();
     }
     var rows = data.usia.rows || [];
+    var usiaMaks = parseInt(data.usia.usiaMaks, 10);
+    if (isNaN(usiaMaks)) usiaMaks = 15;
+    var batasBawah = usiaMaks - 3;
     if (!rows.length) {
-      renderDistribusiUsia(null, tglAcuan, 0);
+      renderDistribusiUsia(null, tglAcuan, 0, usiaMaks);
     } else {
-      var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
+      var distribusi = { bawah:0, thn0:0, thn1:0, thn2:0, thn3:0, atas:0 };
       rows.forEach(function(r) {
         var tglLahirStr = '';
         if (r.ttl) {
@@ -1393,14 +1396,14 @@ function handleDashboardData(data) {
         }
         var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
         if (usia === null) return;
-        if      (usia < 12)  distribusi.bawah12++;
-        else if (usia === 12) distribusi.usia12++;
-        else if (usia === 13) distribusi.usia13++;
-        else if (usia === 14) distribusi.usia14++;
-        else if (usia === 15) distribusi.usia15++;
-        else                  distribusi.atas15++;
+        if      (usia < batasBawah)       distribusi.bawah++;
+        else if (usia === batasBawah)     distribusi.thn0++;
+        else if (usia === batasBawah + 1) distribusi.thn1++;
+        else if (usia === batasBawah + 2) distribusi.thn2++;
+        else if (usia === usiaMaks)       distribusi.thn3++;
+        else                               distribusi.atas++;
       });
-      renderDistribusiUsia(distribusi, tglAcuan, rows.length);
+      renderDistribusiUsia(distribusi, tglAcuan, rows.length, usiaMaks);
     }
   }
 }
@@ -1672,7 +1675,7 @@ function renderTabelPendaftar() {
 
     return '<tr>' +
       '<td class="text-center">' + realIdx + '</td>' +
-      '<td class="text-center"><button class="btn btn-outline-secondary btn-sm" style="padding:1px 7px;font-size:.75rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
+      '<td class="text-center"><button class="btn btn-outline-primary btn-sm" style="padding:1px 7px;font-size:.75rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
       '<td><strong>' + r.nama + '</strong></td>' +
       '<td class="text-center">' + r.lp + '</td>' +
       '<td>' + r.nisn + '</td>' +
@@ -1684,7 +1687,7 @@ function renderTabelPendaftar() {
       '<td style="font-size:.79rem">' + r.alamat + '</td>' +
       '<td>' + r.sekolah + '</td>' +
       '<td class="text-center"><span class="badge-jalur ' + bc + '">' + r.jalur + '</span></td>' +
-      '<td class="text-center"><button class="btn btn-outline-primary btn-sm" style="padding:1px 8px;font-size:.75rem" onclick="lihatStatusPendaftar(' + (startIdx + idx) + ')"><i class="fa-solid fa-eye"></i></button></td>' +
+      '<td class="text-center"><button class="btn btn-sm" style="padding:1px 8px;font-size:.75rem;color:#fd7e14;border:1px solid #fd7e14;background:transparent" onclick="lihatStatusPendaftar(' + (startIdx + idx) + ')"><i class="fa-solid fa-eye"></i></button></td>' +
     '</tr>';
   }).join('');
   
@@ -1780,10 +1783,15 @@ function mbpFormatTtl(ttlStr) {
 function mbpGabungNamaStatus(nama, status) {
   var namaP = mbpProperCase(nama);
   var statusP = mbpProperCase(status);
+  var statusTxt = statusP;
+  var statusColor = '';
+  if (statusP === 'Meninggal')       { statusTxt = 'Sudah Meninggal'; statusColor = '#dc3545'; }
+  else if (statusP === 'Masih Hidup') { statusColor = '#198754'; }
+  var statusHtml = statusColor ? '<span style="color:' + statusColor + '">' + statusTxt + '</span>' : statusTxt;
   if (!namaP && !statusP) return '-';
   if (!statusP) return namaP || '-';
-  if (!namaP) return statusP;
-  return namaP + ' – ' + statusP;
+  if (!namaP) return statusHtml;
+  return namaP + ' – ' + statusHtml;
 }
 
 // Menampilkan modal Biodata Pendaftar (tombol ikon kartu-identitas di kolom Biodata)
@@ -1802,9 +1810,9 @@ function lihatBiodataPendaftar(filteredIdx) {
   setTxt('mbp-ttl', mbpFormatTtl(r.ttl));
   setTxt('mbp-agama', mbpProperCase(r.agama));
   setTxt('mbp-alamat', mbpProperCase(r.alamat));
-  setTxt('mbp-ayah', mbpGabungNamaStatus(r.ayah, r.statusAyah));
+  (function(){ var elA = document.getElementById('mbp-ayah'); if (elA) elA.innerHTML = mbpGabungNamaStatus(r.ayah, r.statusAyah); })();
   setTxt('mbp-pekerjaanayah', mbpProperCase(r.pekerjaanAyah));
-  setTxt('mbp-ibu', mbpGabungNamaStatus(r.ibu, r.statusIbu));
+  (function(){ var elI = document.getElementById('mbp-ibu'); if (elI) elI.innerHTML = mbpGabungNamaStatus(r.ibu, r.statusIbu); })();
   setTxt('mbp-pekerjaanibu', mbpProperCase(r.pekerjaanIbu));
   setTxt('mbp-nohp', r.noHp);
   setTxt('mbp-sekolah', mbpProperSekolah(r.sekolah));
@@ -2265,7 +2273,7 @@ function usiaDist_hitungUsia(tglLahirStr, tglAcuanStr) {
 }
 
 // Render distribusi usia ke widget dashboard
-function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
+function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar, usiaMaks) {
   var contentEl  = document.getElementById('usiaDist-content');
   var loadingEl  = document.getElementById('usiaDist-loading');
   var emptyEl    = document.getElementById('usiaDist-empty');
@@ -2287,14 +2295,16 @@ function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
     }
   }
 
-  // REVISI WARNA: 'warn' diubah menjadi teks kelas warna agar bisa 3 tingkat
+  // REVISI: kategori & warna mengikuti Usia Maksimal (Pengaturan > Usia Maksimal), bukan angka tetap
+  if (!usiaMaks) usiaMaks = 15;
+  var batasBawah = usiaMaks - 3;
   var categories = [
-    { label: '< 12 Thn', key: 'bawah12', colorClass: 'usiaDist-bar-normal' },
-    { label: '12 Tahun', key: 'usia12',  colorClass: 'usiaDist-bar-normal' },
-    { label: '13 Tahun', key: 'usia13',  colorClass: 'usiaDist-bar-normal' },
-    { label: '14 Tahun', key: 'usia14',  colorClass: 'usiaDist-bar-normal' },
-    { label: '15 Tahun', key: 'usia15',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
-    { label: '> 15 Thn', key: 'atas15',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
+    { label: '< ' + batasBawah + ' Thn', key: 'bawah', colorClass: 'usiaDist-bar-normal' },
+    { label: batasBawah + ' Tahun', key: 'thn0',  colorClass: 'usiaDist-bar-normal' },
+    { label: (batasBawah + 1) + ' Tahun', key: 'thn1',  colorClass: 'usiaDist-bar-normal' },
+    { label: (batasBawah + 2) + ' Tahun', key: 'thn2',  colorClass: 'usiaDist-bar-normal' },
+    { label: usiaMaks + ' Tahun', key: 'thn3',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
+    { label: '> ' + usiaMaks + ' Thn', key: 'atas',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
   ];
 
   var maxVal = 0;
