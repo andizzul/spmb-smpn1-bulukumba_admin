@@ -1380,10 +1380,13 @@ function handleDashboardData(data) {
       renderTabelPendaftar();
     }
     var rows = data.usia.rows || [];
+    var usiaMaks = parseInt(data.usia.usiaMaks, 10);
+    if (isNaN(usiaMaks)) usiaMaks = 15;
+    var batasBawah = usiaMaks - 3;
     if (!rows.length) {
-      renderDistribusiUsia(null, tglAcuan, 0);
+      renderDistribusiUsia(null, tglAcuan, 0, usiaMaks);
     } else {
-      var distribusi = { bawah12:0, usia12:0, usia13:0, usia14:0, usia15:0, atas15:0 };
+      var distribusi = { bawah:0, thn0:0, thn1:0, thn2:0, thn3:0, atas:0 };
       rows.forEach(function(r) {
         var tglLahirStr = '';
         if (r.ttl) {
@@ -1392,14 +1395,14 @@ function handleDashboardData(data) {
         }
         var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
         if (usia === null) return;
-        if      (usia < 12)  distribusi.bawah12++;
-        else if (usia === 12) distribusi.usia12++;
-        else if (usia === 13) distribusi.usia13++;
-        else if (usia === 14) distribusi.usia14++;
-        else if (usia === 15) distribusi.usia15++;
-        else                  distribusi.atas15++;
+        if      (usia < batasBawah)       distribusi.bawah++;
+        else if (usia === batasBawah)     distribusi.thn0++;
+        else if (usia === batasBawah + 1) distribusi.thn1++;
+        else if (usia === batasBawah + 2) distribusi.thn2++;
+        else if (usia === usiaMaks)       distribusi.thn3++;
+        else                               distribusi.atas++;
       });
-      renderDistribusiUsia(distribusi, tglAcuan, rows.length);
+      renderDistribusiUsia(distribusi, tglAcuan, rows.length, usiaMaks);
     }
   }
 }
@@ -2192,7 +2195,7 @@ function usiaDist_hitungUsia(tglLahirStr, tglAcuanStr) {
 }
 
 // Render distribusi usia ke widget dashboard
-function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
+function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar, usiaMaks) {
   var contentEl  = document.getElementById('usiaDist-content');
   var loadingEl  = document.getElementById('usiaDist-loading');
   var emptyEl    = document.getElementById('usiaDist-empty');
@@ -2214,14 +2217,16 @@ function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar) {
     }
   }
 
-  // REVISI WARNA: 'warn' diubah menjadi teks kelas warna agar bisa 3 tingkat
+  // REVISI: kategori & warna mengikuti Usia Maksimal (Pengaturan > Usia Maksimal), bukan angka tetap
+  if (!usiaMaks) usiaMaks = 15;
+  var batasBawah = usiaMaks - 3;
   var categories = [
-    { label: '< 12 Thn', key: 'bawah12', colorClass: 'usiaDist-bar-normal' },
-    { label: '12 Tahun', key: 'usia12',  colorClass: 'usiaDist-bar-normal' },
-    { label: '13 Tahun', key: 'usia13',  colorClass: 'usiaDist-bar-normal' },
-    { label: '14 Tahun', key: 'usia14',  colorClass: 'usiaDist-bar-normal' },
-    { label: '15 Tahun', key: 'usia15',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
-    { label: '> 15 Thn', key: 'atas15',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
+    { label: '< ' + batasBawah + ' Thn', key: 'bawah', colorClass: 'usiaDist-bar-normal' },
+    { label: batasBawah + ' Tahun', key: 'thn0',  colorClass: 'usiaDist-bar-normal' },
+    { label: (batasBawah + 1) + ' Tahun', key: 'thn1',  colorClass: 'usiaDist-bar-normal' },
+    { label: (batasBawah + 2) + ' Tahun', key: 'thn2',  colorClass: 'usiaDist-bar-normal' },
+    { label: usiaMaks + ' Tahun', key: 'thn3',  colorClass: 'usiaDist-bar-orange' }, // Kuning/Oranye: Perlu cek manual
+    { label: '> ' + usiaMaks + ' Thn', key: 'atas',  colorClass: 'usiaDist-bar-warn' }    // Merah Menyala: Lampu Merah
   ];
 
   var maxVal = 0;
