@@ -399,6 +399,8 @@
   .usiaDist-count { width:36px; text-align:right; font-size:.82rem; font-weight:700; color:#1e2a38; flex-shrink:0; }
   .usiaDist-pct   { width:44px; text-align:right; font-size:.75rem; color:#888; flex-shrink:0; }
   /* SCOPE END - Distribusi Usia */
+  .btn-outline-orange { color:#fd7e14; border:1px solid #fd7e14; background:transparent; }
+  .btn-outline-orange:hover { color:#fff; background:#fd7e14; border-color:#fd7e14; }
 </style>
 </head>
 <body class="needs-login">
@@ -1687,7 +1689,7 @@ function renderTabelPendaftar() {
       '<td style="font-size:.79rem">' + r.alamat + '</td>' +
       '<td>' + r.sekolah + '</td>' +
       '<td class="text-center"><span class="badge-jalur ' + bc + '">' + r.jalur + '</span></td>' +
-      '<td class="text-center"><button class="btn btn-sm" style="padding:1px 8px;font-size:.75rem;color:#fd7e14;border:1px solid #fd7e14;background:transparent" onclick="lihatStatusPendaftar(' + (startIdx + idx) + ')"><i class="fa-solid fa-eye"></i></button></td>' +
+      '<td class="text-center"><button class="btn btn-outline-orange btn-sm" style="padding:1px 8px;font-size:.75rem" onclick="lihatStatusPendaftar(' + (startIdx + idx) + ')"><i class="fa-solid fa-eye"></i></button></td>' +
     '</tr>';
   }).join('');
   
