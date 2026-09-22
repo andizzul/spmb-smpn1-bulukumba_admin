@@ -705,6 +705,7 @@
               <thead style="background:#dbeafe;color:#1e2a38;position:sticky;top:0;z-index:1;white-space:nowrap;">
                 <tr>
                   <th style="width:60px;text-align:center;cursor:pointer" onclick="sortTable(0)">No <span class="sort-icon d-inline-block ms-1">↕</span></th>
+                  <th style="width:44px;text-align:center">Biodata</th>
                   <th style="cursor:pointer;min-width:160px" onclick="sortTable(1)">Nama <span class="sort-icon d-inline-block ms-1">↕</span></th>
                   <th style="width:70px;text-align:center;cursor:pointer" onclick="sortTable(2)">L/P <span class="sort-icon d-inline-block ms-1">↕</span></th>
                   <th style="cursor:pointer;min-width:120px" onclick="sortTable(3)">NISN <span class="sort-icon d-inline-block ms-1">↕</span></th>
@@ -1552,7 +1553,7 @@ var itemsPerPage = 10;
 
 function loadDataPendaftarAsli(retry) {
   var tbody = document.getElementById('dp-tbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memuat data pendaftar dari sistem...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memuat data pendaftar dari sistem...</td></tr>';
   
   try {
     google.script.run
@@ -1567,12 +1568,12 @@ function loadDataPendaftarAsli(retry) {
       })
       .withFailureHandler(function(e) {
         if (!retry) { setTimeout(function() { loadDataPendaftarAsli(true); }, 800); return; }
-        if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger py-4">Gagal memuat data: ' + e + '</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="text-center text-danger py-4">Gagal memuat data: ' + e + '</td></tr>';
       })
       .getDataPendaftar();
   } catch(e) {
     if (!retry) { setTimeout(function() { loadDataPendaftarAsli(true); }, 800); return; }
-    if (tbody) tbody.innerHTML = '<tr><td colspan="12" class="text-center text-danger py-4">Sistem sedang memuat...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="text-center text-danger py-4">Sistem sedang memuat...</td></tr>';
   }
 }
 
@@ -1642,7 +1643,7 @@ function renderTabelPendaftar() {
   });
   
   if(_dpFiltered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">Tidak ada data yang cocok</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">Tidak ada data yang cocok</td></tr>';
     if(info) info.innerHTML = 'Tidak ada data';
     return;
   }
@@ -1671,7 +1672,8 @@ function renderTabelPendaftar() {
 
     return '<tr>' +
       '<td class="text-center">' + realIdx + '</td>' +
-      '<td><strong>' + r.nama + '</strong> <button class="btn btn-outline-secondary btn-sm" style="padding:0px 6px;font-size:.7rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
+      '<td class="text-center"><button class="btn btn-outline-secondary btn-sm" style="padding:1px 7px;font-size:.75rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
+      '<td><strong>' + r.nama + '</strong></td>' +
       '<td class="text-center">' + r.lp + '</td>' +
       '<td>' + r.nisn + '</td>' +
       '<td style="font-size:.78rem">' + r.nik + '</td>' +
@@ -1744,7 +1746,47 @@ function lihatStatusPendaftar(filteredIdx) {
   }
 }
 
-// Menampilkan modal Biodata Pendaftar (tombol ikon kartu-identitas di kolom Nama)
+// Fungsi bantu format khusus Modal Biodata Pendaftar (tidak dipakai tabel utama)
+function mbpProperCase(str) {
+  if (!str) return str;
+  return String(str).toLowerCase().replace(/(^|[\s-])([a-z])/g, function(m, sep, chr) {
+    return sep + chr.toUpperCase();
+  });
+}
+function mbpProperSekolah(str) {
+  if (!str) return str;
+  return String(str).split(' ').map(function(word) {
+    if (!word) return word;
+    if (/^[0-9]+$/.test(word)) return word;
+    var jmlHuruf = word.replace(/[^A-Za-z]/g, '').length;
+    if (jmlHuruf > 0 && jmlHuruf < 5) return word.toUpperCase();
+    return mbpProperCase(word);
+  }).join(' ');
+}
+function mbpJenisKelamin(lp) {
+  var v = String(lp || '').trim().toUpperCase();
+  if (v === 'L') return 'Laki-Laki';
+  if (v === 'P') return 'Perempuan';
+  return lp || '-';
+}
+function mbpFormatTtl(ttlStr) {
+  if (!ttlStr) return ttlStr;
+  var commaIdx = ttlStr.lastIndexOf(',');
+  if (commaIdx === -1) return mbpProperCase(ttlStr);
+  var tempat = ttlStr.substring(0, commaIdx).trim();
+  var tgl    = ttlStr.substring(commaIdx + 1).trim();
+  return mbpProperCase(tempat) + ', ' + formatTglAdmin(tgl);
+}
+function mbpGabungNamaStatus(nama, status) {
+  var namaP = mbpProperCase(nama);
+  var statusP = mbpProperCase(status);
+  if (!namaP && !statusP) return '-';
+  if (!statusP) return namaP || '-';
+  if (!namaP) return statusP;
+  return namaP + ' – ' + statusP;
+}
+
+// Menampilkan modal Biodata Pendaftar (tombol ikon kartu-identitas di kolom Biodata)
 function lihatBiodataPendaftar(filteredIdx) {
   var r = _dpFiltered[filteredIdx];
   if (!r) return;
@@ -1754,20 +1796,18 @@ function lihatBiodataPendaftar(filteredIdx) {
     if (el) el.textContent = (val && String(val).trim()) ? val : '-';
   };
 
-  setTxt('mbp-nama', r.nama);
-  setTxt('mbp-lp', r.lp);
+  setTxt('mbp-nama', String(r.nama || '-').toUpperCase());
+  setTxt('mbp-lp', mbpJenisKelamin(r.lp));
   setTxt('mbp-nisn', r.nisn);
-  setTxt('mbp-ttl', formatTtlAdmin(r.ttl));
-  setTxt('mbp-agama', r.agama);
-  setTxt('mbp-alamat', r.alamat);
-  setTxt('mbp-ayah', r.ayah);
-  setTxt('mbp-statusayah', r.statusAyah);
-  setTxt('mbp-pekerjaanayah', r.pekerjaanAyah);
-  setTxt('mbp-ibu', r.ibu);
-  setTxt('mbp-statusibu', r.statusIbu);
-  setTxt('mbp-pekerjaanibu', r.pekerjaanIbu);
+  setTxt('mbp-ttl', mbpFormatTtl(r.ttl));
+  setTxt('mbp-agama', mbpProperCase(r.agama));
+  setTxt('mbp-alamat', mbpProperCase(r.alamat));
+  setTxt('mbp-ayah', mbpGabungNamaStatus(r.ayah, r.statusAyah));
+  setTxt('mbp-pekerjaanayah', mbpProperCase(r.pekerjaanAyah));
+  setTxt('mbp-ibu', mbpGabungNamaStatus(r.ibu, r.statusIbu));
+  setTxt('mbp-pekerjaanibu', mbpProperCase(r.pekerjaanIbu));
   setTxt('mbp-nohp', r.noHp);
-  setTxt('mbp-sekolah', r.sekolah);
+  setTxt('mbp-sekolah', mbpProperSekolah(r.sekolah));
   setTxt('mbp-jalur', r.jalur);
 
   var modalBiodataEl = document.getElementById('modalBiodataPendaftar');
@@ -2422,22 +2462,20 @@ document.addEventListener('DOMContentLoaded', function() {
         <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-id-card text-primary"></i> Biodata Pendaftar</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
-      <div class="modal-body">
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nama"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jenis Kelamin</div><div class="fw-bold" style="font-size:.88rem" id="mbp-lp"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">NISN</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nisn"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Tempat/Tgl Lahir</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ttl"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Agama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-agama"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Alamat</div><div class="fw-bold" style="font-size:.88rem" id="mbp-alamat"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ayah"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Status Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-statusayah"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanayah"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ibu"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Status Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-statusibu"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanibu"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nomor HP</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nohp"></div></div>
-        <div class="mb-2 pb-2" style="border-bottom:1px solid #eee"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Asal Sekolah</div><div class="fw-bold" style="font-size:.88rem" id="mbp-sekolah"></div></div>
-        <div class="mb-0" style="font-size:.88rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jalur Pendaftaran</div><div class="fw-bold" id="mbp-jalur"></div></div>
+      <div class="modal-body p-0">
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nama"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jenis Kelamin</div><div class="fw-bold" style="font-size:.88rem" id="mbp-lp"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">NISN</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nisn"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Tempat/Tgl Lahir</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ttl"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Agama</div><div class="fw-bold" style="font-size:.88rem" id="mbp-agama"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Alamat</div><div class="fw-bold" style="font-size:.88rem" id="mbp-alamat"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ayah"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Bapak</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanayah"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nama Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-ibu"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Pekerjaan Ibu</div><div class="fw-bold" style="font-size:.88rem" id="mbp-pekerjaanibu"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nomor HP</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nohp"></div></div>
+        <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Asal Sekolah</div><div class="fw-bold" style="font-size:.88rem" id="mbp-sekolah"></div></div>
+        <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jalur Pendaftaran</div><div class="fw-bold" style="font-size:.88rem" id="mbp-jalur"></div></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
