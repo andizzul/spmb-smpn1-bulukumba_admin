@@ -398,6 +398,8 @@
   .usiaDist-bar-warn   { background:#ef4444; }          /* Merah (Danger) untuk mutlak ditolak */
   .usiaDist-count { width:36px; text-align:right; font-size:.82rem; font-weight:700; color:#1e2a38; flex-shrink:0; }
   .usiaDist-pct   { width:44px; text-align:right; font-size:.75rem; color:#888; flex-shrink:0; }
+  @keyframes usiaDistBlinkRed { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+  .usiaDist-blink-red { color:#dc3545 !important; font-style:normal !important; font-weight:700; animation:usiaDistBlinkRed 1.6s ease-in-out infinite; }
   /* SCOPE END - Distribusi Usia */
   .btn-outline-orange { color:#fd7e14; border:1px solid #fd7e14; background:transparent; }
   .btn-outline-orange:hover { color:#fff; background:#fd7e14; border-color:#fd7e14; }
@@ -451,17 +453,17 @@
       </a>
     </li>
 
-    <!-- 2. Data Pendaftar -->
-    <li class="nav-item-spmb">
-      <a class="nav-link-spmb" id="nav-data-pendaftar" onclick="bukaHalaman('data-pendaftar')">
-        <i class="fa-solid fa-table-list nav-icon"></i> Data Pendaftar
-      </a>
-    </li>
-
-    <!-- 3. Rekap per Jalur -->
+    <!-- 2. Rekap per Jalur -->
     <li class="nav-item-spmb">
       <a class="nav-link-spmb" id="nav-rekap" onclick="bukaHalaman('rekap-jalur')">
         <i class="fa-solid fa-chart-pie nav-icon"></i> Rekap per Jalur
+      </a>
+    </li>
+
+    <!-- 3. Data Pendaftar -->
+    <li class="nav-item-spmb">
+      <a class="nav-link-spmb" id="nav-data-pendaftar" onclick="bukaHalaman('data-pendaftar')">
+        <i class="fa-solid fa-table-list nav-icon"></i> Data Pendaftar
       </a>
     </li>
 
@@ -493,12 +495,7 @@
         </li>
         <li class="nav-item-spmb">
           <a class="nav-link-spmb" id="nav-pgtr-pendaftaran" onclick="bukaHalaman('pengaturan-pendaftaran')">
-            Buka/Tutup Pendaftaran
-          </a>
-        </li>
-        <li class="nav-item-spmb">
-          <a class="nav-link-spmb" id="nav-pgtr-pengumuman" onclick="bukaHalaman('pengaturan-pengumuman')">
-            Buka/Tutup Pengumuman
+            Buka/Tutup Akses
           </a>
         </li>
       </ul>
@@ -604,7 +601,7 @@
 
       <!-- Info Cards bawah kecil -->
       <div class="row g-3 mb-4">
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-4">
           <div class="info-card">
             <div class="ic-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">
               <i class="fa-solid fa-users"></i>
@@ -615,7 +612,7 @@
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-4">
           <div class="info-card">
             <div class="ic-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">
               <i class="fa-solid fa-user-shield"></i>
@@ -623,6 +620,17 @@
             <div>
               <div class="ic-label">Status Pendaftaran</div>
               <div class="ic-value" id="status-pendaftaran-badge"><span class="status-off">Memuat...</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="info-card">
+            <div class="ic-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">
+              <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div>
+              <div class="ic-label">Status Pengumuman</div>
+              <div class="ic-value" id="status-pengumuman-badge"><span class="status-off">Memuat...</span></div>
             </div>
           </div>
         </div>
@@ -1034,33 +1042,32 @@
     </div>
 
     <!-- ─────────────────────────────────────────
-         PAGE: PENGATURAN PENDAFTARAN
+         PAGE: BUKA/TUTUP AKSES (Pendaftaran + Pengumuman digabung)
          ───────────────────────────────────────── -->
     <div id="page-pengaturan-pendaftaran" class="page-content d-none">
-      <div class="page-title"><i class="fa-solid fa-gear"></i> Pengaturan Pendaftaran</div>
-      <div class="panel" style="max-width:480px">
-        <div class="panel-header"><h6><i class="fa-solid fa-toggle-on"></i> Status Penerimaan Peserta Didik Baru</h6></div>
-        <div class="panel-body">
-          <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
-          <div id="status-pgtr-pendaftaran" class="mb-3"><span class="status-off">Memuat...</span></div>
-          <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
-          <button class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
+      <div class="page-title"><i class="fa-solid fa-gear"></i> Buka/Tutup Akses</div>
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <div class="panel">
+            <div class="panel-header"><h6><i class="fa-solid fa-toggle-on"></i> Status Penerimaan Peserta Didik Baru</h6></div>
+            <div class="panel-body">
+              <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
+              <div id="status-pgtr-pendaftaran" class="mb-3"><span class="status-off">Memuat...</span></div>
+              <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
+              <button class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- ─────────────────────────────────────────
-         PAGE: PENGATURAN PENGUMUMAN
-         ───────────────────────────────────────── -->
-    <div id="page-pengaturan-pengumuman" class="page-content d-none">
-      <div class="page-title"><i class="fa-solid fa-gear"></i> Pengaturan Pengumuman</div>
-      <div class="panel" style="max-width:480px">
-        <div class="panel-header"><h6><i class="fa-solid fa-bullhorn"></i> Status Pengumuman Hasil Seleksi</h6></div>
-        <div class="panel-body">
-          <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
-          <div id="status-pgtr-pengumuman" class="mb-3"><span class="status-off">Memuat...</span></div>
-          <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
-          <button class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
+        <div class="col-12 col-md-6">
+          <div class="panel">
+            <div class="panel-header"><h6><i class="fa-solid fa-bullhorn"></i> Status Pengumuman Hasil Seleksi</h6></div>
+            <div class="panel-body">
+              <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
+              <div id="status-pgtr-pengumuman" class="mb-3"><span class="status-off">Memuat...</span></div>
+              <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
+              <button class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1163,8 +1170,7 @@ var PAGE_MAP = {
   'export':                  'page-export',
   'pengaturan-kuota':        'page-pengaturan-kuota',
   'pengaturan-usia':         'page-pengaturan-usia',
-  'pengaturan-pendaftaran':  'page-pengaturan-pendaftaran',
-  'pengaturan-pengumuman':   'page-pengaturan-pengumuman'
+  'pengaturan-pendaftaran':  'page-pengaturan-pendaftaran'
 };
 var NAV_MAP = {
   'dashboard':               'nav-dashboard',
@@ -1174,8 +1180,7 @@ var NAV_MAP = {
   'export':                  'nav-export',
   'pengaturan-kuota':        'nav-pgtr-kuota',
   'pengaturan-usia':         'nav-pgtr-usia',
-  'pengaturan-pendaftaran':  'nav-pgtr-pendaftaran',
-  'pengaturan-pengumuman':   'nav-pgtr-pengumuman'
+  'pengaturan-pendaftaran':  'nav-pgtr-pendaftaran'
 };
 
 function bukaHalaman(pageId) {
@@ -1194,7 +1199,7 @@ function bukaHalaman(pageId) {
   var targetNav = document.getElementById(NAV_MAP[pageId]);
   if(targetNav) targetNav.classList.add('active');
   // Expand dropdown pengaturan jika sub-menu dipilih
-  if(pageId === 'pengaturan-kuota' || pageId === 'pengaturan-usia' || pageId === 'pengaturan-pendaftaran' || pageId === 'pengaturan-pengumuman') {
+  if(pageId === 'pengaturan-kuota' || pageId === 'pengaturan-usia' || pageId === 'pengaturan-pendaftaran') {
     var sub = document.getElementById('submenu-pengaturan');
     if(sub && !sub.classList.contains('show')) {
       new bootstrap.Collapse(sub, {toggle: true});
@@ -1261,9 +1266,12 @@ function handleStatusPendaftaran(status) {
 function handleStatusPengumuman(status) {
   var on = (String(status).toLowerCase() === 'buka');
   var el = document.getElementById('status-pgtr-pengumuman');
-  if(el) el.innerHTML = on
+  var elDash = document.getElementById('status-pengumuman-badge');
+  var html = on
     ? '<span class="status-on"><i class="fa-solid fa-circle-check me-1"></i>DIBUKA</span>'
     : '<span class="status-off"><i class="fa-solid fa-circle-xmark me-1"></i>DITUTUP</span>';
+  if(el) el.innerHTML = html;
+  if(elDash) elDash.innerHTML = html;
 }
 
 function handlePendaftarTerbaru(terbaru) {
@@ -2293,7 +2301,8 @@ function renderDistribusiUsia(distribusi, tglAcuan, totalPendaftar, usiaMaks) {
     var d = new Date(tglAcuan);
     var bln3 = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
     if (!isNaN(d.getTime())) {
-      acuanLabel.textContent = 'Per ' + d.getDate() + ' ' + bln3[d.getMonth()] + ' ' + d.getFullYear();
+      acuanLabel.textContent = 'Usia maksimal ' + (usiaMaks || 15) + ' tahun per ' + d.getDate() + ' ' + bln3[d.getMonth()] + ' ' + d.getFullYear();
+      acuanLabel.classList.add('usiaDist-blink-red');
     }
   }
 
