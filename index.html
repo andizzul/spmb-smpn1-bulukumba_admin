@@ -880,155 +880,95 @@
          PAGE: EXPORT DATA
          ───────────────────────────────────────── -->
     <div id="page-export" class="page-content d-none">
-      <div class="page-title"><i class="fa-solid fa-download"></i> Export Data</div>
+      <style>
+        #page-export .export-header { display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:28px; }
+        #page-export .export-title { margin:0;color:#1e2a38;font-size:1.65rem;font-weight:800;line-height:1.2; }
+        #page-export .export-subtitle { margin:6px 0 0;color:#6B7280;font-size:.82rem; }
+        #page-export .export-all-btn { display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:#2563EB;color:#fff;border:none;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s,box-shadow .15s; }
+        #page-export .export-all-btn:hover { background:#1D4ED8;box-shadow:0 4px 12px rgba(37,99,235,.2); }
+        #page-export .export-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:24px; }
+        #page-export .export-card { background:#fff;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);padding:20px;display:flex;flex-direction:column;min-height:220px;transition:border-color .15s,box-shadow .15s; }
+        #page-export .export-card:hover { border-color:#2563EB;box-shadow:0 5px 16px rgba(37,99,235,.1); }
+        #page-export .export-card-head { display:flex;align-items:center;gap:12px;margin-bottom:14px; }
+        #page-export .export-card-icon { width:42px;height:42px;border-radius:50%;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0; }
+        #page-export .export-card-title { color:#1e2a38;font-size:.98rem;font-weight:700; }
+        #page-export .export-card-desc { color:#6B7280;font-size:.82rem;line-height:1.5;margin:0 0 14px; }
+        #page-export .export-badges { display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px; }
+        #page-export .export-badge { display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:700;padding:4px 9px;border-radius:20px; }
+        #page-export .badge-domisili { background:#DBEAFE;color:#1D4ED8; }
+        #page-export .badge-prestasi { background:#DCFCE7;color:#15803D; }
+        #page-export .badge-afirmasi { background:#FEF9C3;color:#A16207; }
+        #page-export .badge-mutasi { background:#EDE9FE;color:#7C3AED; }
+        #page-export .export-link { display:inline-flex;align-items:center;gap:6px;margin-top:auto;color:#2563EB;font-size:.82rem;font-weight:700;text-decoration:none;cursor:pointer; }
+        #page-export .export-link:hover { text-decoration:underline; }
+        #page-export .export-note { margin-top:2px;color:#6B7280;font-size:.76rem;line-height:1.5; }
+        @media (max-width:600px) {
+          #page-export .export-header { flex-direction:column;align-items:stretch; }
+          #page-export .export-all-btn { align-self:flex-start; }
+        }
+      </style>
 
-      <!-- Hero Banner -->
-      <div style="background:linear-gradient(135deg,#1e3a5f 0%,#1565C0 55%,#0d47a1 100%);border-radius:16px;padding:32px 36px;margin-bottom:28px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(21,101,192,.35);">
-        <div style="position:absolute;top:-30px;right:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06);"></div>
-        <div style="position:absolute;bottom:-50px;right:80px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.04);"></div>
-        <div style="position:relative;z-index:1;">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
-            <div style="width:48px;height:48px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#fff;backdrop-filter:blur(4px);">
-              <i class="fa-solid fa-file-excel"></i>
-            </div>
-            <div>
-              <div style="font-size:1.3rem;font-weight:800;color:#fff;line-height:1.1;">Export Data Pendaftar</div>
-              <div style="font-size:.82rem;color:rgba(200,220,255,.8);margin-top:2px;">Download data langsung dari sheet Data_Pendaftar ke format Excel (.xlsx)</div>
-            </div>
+      <div class="export-header">
+        <div>
+          <h1 class="export-title">Export Data Pendaftar</h1>
+          <div class="export-subtitle">Pilih kategori data yang ingin Anda unduh.</div>
+        </div>
+        <button class="export-all-btn" onclick="exportExcel('semua')">
+          <i class="fa-solid fa-download"></i> Unduh Semua Data
+        </button>
+      </div>
+
+      <div class="export-grid">
+        <div class="export-card">
+          <div class="export-card-head">
+            <div class="export-card-icon"><i class="fa-solid fa-house-chimney"></i></div>
+            <div class="export-card-title">Jalur Domisili</div>
           </div>
-          <div style="display:flex;gap:20px;margin-top:16px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:7px;color:rgba(200,220,255,.85);font-size:.8rem;"><i class="fa-solid fa-circle-check" style="color:#4ade80"></i> Semua kolom tersedia</div>
-            <div style="display:flex;align-items:center;gap:7px;color:rgba(200,220,255,.85);font-size:.8rem;"><i class="fa-solid fa-circle-check" style="color:#4ade80"></i> Filter per jalur</div>
-            <div style="display:flex;align-items:center;gap:7px;color:rgba(200,220,255,.85);font-size:.8rem;"><i class="fa-solid fa-circle-check" style="color:#4ade80"></i> Format .xlsx siap pakai</div>
+          <p class="export-card-desc">Unduh data pendaftar yang mengikuti jalur Domisili dalam format Excel.</p>
+          <div class="export-badges">
+            <span class="export-badge badge-domisili">Domisili</span>
           </div>
+          <a class="export-link" onclick="exportExcel('Domisili')"><i class="fa-solid fa-download"></i> Unduh .xlsx</a>
+        </div>
+
+        <div class="export-card">
+          <div class="export-card-head">
+            <div class="export-card-icon"><i class="fa-solid fa-trophy"></i></div>
+            <div class="export-card-title">Jalur Prestasi</div>
+          </div>
+          <p class="export-card-desc">Unduh data pendaftar yang mengikuti jalur Prestasi dalam format Excel.</p>
+          <div class="export-badges">
+            <span class="export-badge badge-prestasi">Prestasi</span>
+          </div>
+          <a class="export-link" onclick="exportExcel('Prestasi')"><i class="fa-solid fa-download"></i> Unduh .xlsx</a>
+        </div>
+
+        <div class="export-card">
+          <div class="export-card-head">
+            <div class="export-card-icon"><i class="fa-solid fa-hand-holding-heart"></i></div>
+            <div class="export-card-title">Jalur Afirmasi</div>
+          </div>
+          <p class="export-card-desc">Unduh data pendaftar yang mengikuti jalur Afirmasi dalam format Excel.</p>
+          <div class="export-badges">
+            <span class="export-badge badge-afirmasi">Afirmasi</span>
+          </div>
+          <a class="export-link" onclick="exportExcel('Afirmasi')"><i class="fa-solid fa-download"></i> Unduh .xlsx</a>
+        </div>
+
+        <div class="export-card">
+          <div class="export-card-head">
+            <div class="export-card-icon"><i class="fa-solid fa-right-left"></i></div>
+            <div class="export-card-title">Jalur Mutasi</div>
+          </div>
+          <p class="export-card-desc">Unduh data pendaftar yang mengikuti jalur Mutasi dalam format Excel.</p>
+          <div class="export-badges">
+            <span class="export-badge badge-mutasi">Mutasi</span>
+          </div>
+          <a class="export-link" onclick="exportExcel('Mutasi')"><i class="fa-solid fa-download"></i> Unduh .xlsx</a>
         </div>
       </div>
 
-      <!-- Export Cards Grid -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-bottom:28px;">
-
-        <!-- Card: Semua Data -->
-        <div class="export-card" style="background:#fff;border-radius:14px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.13)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.07)'">
-          <div style="background:linear-gradient(135deg,#1976D2,#0D47A1);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <div>
-              <div style="color:#fff;font-weight:800;font-size:1rem;">Semua Pendaftar</div>
-              <div style="color:rgba(255,255,255,.75);font-size:.75rem;">Seluruh jalur digabung</div>
-            </div>
-          </div>
-          <div style="padding:16px 20px;">
-            <p style="font-size:.82rem;color:#666;margin-bottom:16px;line-height:1.5;">Ekspor seluruh data pendaftar dari semua jalur (Domisili, Prestasi, Afirmasi, Mutasi) dalam satu file Excel.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-              <span style="background:#dbeafe;color:#1d4ed8;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;">Domisili</span>
-              <span style="background:#dcfce7;color:#15803d;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;">Prestasi</span>
-              <span style="background:#fef9c3;color:#a16207;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;">Afirmasi</span>
-              <span style="background:#ede9fe;color:#7c3aed;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;">Mutasi</span>
-            </div>
-            <button onclick="exportExcel('semua')" style="width:100%;padding:10px;background:linear-gradient(135deg,#1976D2,#0D47A1);color:#fff;border:none;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              <i class="fa-solid fa-download"></i> Download Excel
-            </button>
-          </div>
-        </div>
-
-        <!-- Card: Domisili -->
-        <div class="export-card" style="background:#fff;border-radius:14px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.13)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.07)'">
-          <div style="background:linear-gradient(135deg,#1976D2,#1565C0);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;">
-              <i class="fa-solid fa-house-chimney"></i>
-            </div>
-            <div>
-              <div style="color:#fff;font-weight:800;font-size:1rem;">Jalur Domisili</div>
-              <div style="color:rgba(255,255,255,.75);font-size:.75rem;">Filter pendaftar domisili</div>
-            </div>
-          </div>
-          <div style="padding:16px 20px;">
-            <p style="font-size:.82rem;color:#666;margin-bottom:16px;line-height:1.5;">Ekspor data pendaftar jalur Domisili saja. Semua kolom dari sheet Data_Pendaftar tersedia dalam file ini.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-              <span style="background:#dbeafe;color:#1d4ed8;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;"><i class="fa-solid fa-house-chimney me-1"></i>Domisili</span>
-            </div>
-            <button onclick="exportExcel('Domisili')" style="width:100%;padding:10px;background:linear-gradient(135deg,#1976D2,#1565C0);color:#fff;border:none;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              <i class="fa-solid fa-download"></i> Download Excel
-            </button>
-          </div>
-        </div>
-
-        <!-- Card: Prestasi -->
-        <div class="export-card" style="background:#fff;border-radius:14px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.13)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.07)'">
-          <div style="background:linear-gradient(135deg,#388E3C,#2E7D32);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;">
-              <i class="fa-solid fa-trophy"></i>
-            </div>
-            <div>
-              <div style="color:#fff;font-weight:800;font-size:1rem;">Jalur Prestasi</div>
-              <div style="color:rgba(255,255,255,.75);font-size:.75rem;">Filter pendaftar prestasi</div>
-            </div>
-          </div>
-          <div style="padding:16px 20px;">
-            <p style="font-size:.82rem;color:#666;margin-bottom:16px;line-height:1.5;">Ekspor data pendaftar jalur Prestasi saja. Semua kolom dari sheet Data_Pendaftar tersedia dalam file ini.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-              <span style="background:#dcfce7;color:#15803d;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;"><i class="fa-solid fa-trophy me-1"></i>Prestasi</span>
-            </div>
-            <button onclick="exportExcel('Prestasi')" style="width:100%;padding:10px;background:linear-gradient(135deg,#388E3C,#2E7D32);color:#fff;border:none;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              <i class="fa-solid fa-download"></i> Download Excel
-            </button>
-          </div>
-        </div>
-
-        <!-- Card: Afirmasi -->
-        <div class="export-card" style="background:#fff;border-radius:14px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.13)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.07)'">
-          <div style="background:linear-gradient(135deg,#F9A825,#E65100);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;">
-              <i class="fa-solid fa-hand-holding-heart"></i>
-            </div>
-            <div>
-              <div style="color:#fff;font-weight:800;font-size:1rem;">Jalur Afirmasi</div>
-              <div style="color:rgba(255,255,255,.75);font-size:.75rem;">Filter pendaftar afirmasi</div>
-            </div>
-          </div>
-          <div style="padding:16px 20px;">
-            <p style="font-size:.82rem;color:#666;margin-bottom:16px;line-height:1.5;">Ekspor data pendaftar jalur Afirmasi saja. Semua kolom dari sheet Data_Pendaftar tersedia dalam file ini.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-              <span style="background:#fef9c3;color:#a16207;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;"><i class="fa-solid fa-hand-holding-heart me-1"></i>Afirmasi</span>
-            </div>
-            <button onclick="exportExcel('Afirmasi')" style="width:100%;padding:10px;background:linear-gradient(135deg,#F9A825,#E65100);color:#fff;border:none;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              <i class="fa-solid fa-download"></i> Download Excel
-            </button>
-          </div>
-        </div>
-
-        <!-- Card: Mutasi -->
-        <div class="export-card" style="background:#fff;border-radius:14px;border:1.5px solid #e2e8f0;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.13)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 12px rgba(0,0,0,.07)'">
-          <div style="background:linear-gradient(135deg,#00897B,#004D40);padding:18px 20px;display:flex;align-items:center;gap:14px;">
-            <div style="width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;">
-              <i class="fa-solid fa-right-left"></i>
-            </div>
-            <div>
-              <div style="color:#fff;font-weight:800;font-size:1rem;">Jalur Mutasi</div>
-              <div style="color:rgba(255,255,255,.75);font-size:.75rem;">Filter pendaftar mutasi</div>
-            </div>
-          </div>
-          <div style="padding:16px 20px;">
-            <p style="font-size:.82rem;color:#666;margin-bottom:16px;line-height:1.5;">Ekspor data pendaftar jalur Mutasi saja. Semua kolom dari sheet Data_Pendaftar tersedia dalam file ini.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-              <span style="background:#ede9fe;color:#7c3aed;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;"><i class="fa-solid fa-right-left me-1"></i>Mutasi</span>
-            </div>
-            <button onclick="exportExcel('Mutasi')" style="width:100%;padding:10px;background:linear-gradient(135deg,#00897B,#004D40);color:#fff;border:none;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              <i class="fa-solid fa-download"></i> Download Excel
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Info Footer -->
-      <div style="background:#f8faff;border:1.5px solid #dbeafe;border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;">
-        <i class="fa-solid fa-circle-info" style="color:#3b82f6;font-size:1.1rem;margin-top:2px;flex-shrink:0;"></i>
-        <div style="font-size:.82rem;color:#555;line-height:1.6;">
-          <strong style="color:#1e2a38;">Catatan:</strong> Data yang diunduh diambil langsung dari sheet <code>Data_Pendaftar</code> secara real-time. Pastikan koneksi internet stabil saat proses download berlangsung. File yang dihasilkan berformat <strong>.xlsx</strong> dan dapat dibuka dengan Microsoft Excel, Google Sheets, atau LibreOffice Calc.
-        </div>
-      </div>
+      <div class="export-note">Catatan: File diunduh secara real-time dalam format .xlsx. Pastikan koneksi internet stabil.</div>
 
       <!-- Loading Overlay Export -->
       <div id="export-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
@@ -2166,11 +2106,31 @@ function exportExcel(jalurFilter) {
           return;
         }
 
-        // Susun seluruh kolom spreadsheet untuk Excel
-        var header = filtered[0]._headers || [];
+        // Susun data untuk Excel dengan header yang rapi
+        var header = ['No', 'Nama Lengkap', 'L/P', 'NISN', 'NIK', 'Tempat Lahir', 'Tanggal Lahir', 'Nama Ayah', 'Nama Ibu', 'Alamat', 'Asal Sekolah', 'Jalur'];
         var rows = [header];
-        filtered.forEach(function(r) {
-          rows.push(r._raw || []);
+        filtered.forEach(function(r, idx) {
+          // Pisahkan tempat dan tanggal lahir dari field ttl
+          var tempat = '', tgl = '';
+          if(r.ttl) {
+            var ci = r.ttl.lastIndexOf(',');
+            if(ci !== -1) { tempat = r.ttl.substring(0, ci).trim(); tgl = r.ttl.substring(ci+1).trim(); }
+            else { tempat = r.ttl; }
+          }
+          rows.push([
+            idx + 1,
+            r.nama   || '',
+            r.lp     || '',
+            r.nisn   || '',
+            r.nik    || '',
+            tempat,
+            tgl,
+            r.ayah   || '',
+            r.ibu    || '',
+            r.alamat || '',
+            r.sekolah|| '',
+            r.jalur  || ''
+          ]);
         });
 
         // Buat workbook
@@ -2179,7 +2139,7 @@ function exportExcel(jalurFilter) {
 
         // Lebar kolom otomatis
         var colWidths = header.map(function(h, i) {
-          var max = String(h || '').length;
+          var max = h.length;
           rows.slice(1).forEach(function(row) {
             var cell = String(row[i] || '');
             if(cell.length > max) max = cell.length;
