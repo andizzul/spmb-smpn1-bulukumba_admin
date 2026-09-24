@@ -1852,7 +1852,7 @@ function lihatBiodataPendaftar(filteredIdx) {
   setTxt('mbp-nisn', r.nisn);
   setTxt('mbp-ttl', mbpFormatTtl(r.ttl));
   setTxt('mbp-agama', mbpProperCase(r.agama));
-  setTxt('mbp-alamat', mbpProperSekolah(r.alamat));
+  setTxt('mbp-alamat', mbpProperCase(r.alamat));
   (function(){ var elA = document.getElementById('mbp-ayah'); if (elA) elA.innerHTML = mbpGabungNamaStatus(r.ayah, r.statusAyah); })();
   setTxt('mbp-pekerjaanayah', mbpProperCase(r.pekerjaanAyah));
   (function(){ var elI = document.getElementById('mbp-ibu'); if (elI) elI.innerHTML = mbpGabungNamaStatus(r.ibu, r.statusIbu); })();
