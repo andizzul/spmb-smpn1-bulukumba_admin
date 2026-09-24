@@ -1049,23 +1049,23 @@
       <div class="row g-3">
         <div class="col-12 col-md-6">
           <div class="panel">
-            <div class="panel-header"><h6><i class="fa-solid fa-toggle-on"></i> Status Penerimaan Peserta Didik Baru</h6></div>
+            <div class="panel-header"><h6><i class="fa-solid fa-toggle-on"></i> Portal Pendaftaran Murid Baru</h6></div>
             <div class="panel-body">
               <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
               <div id="status-pgtr-pendaftaran" class="mb-3"><span class="status-off">Memuat...</span></div>
-              <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
-              <button class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
+              <button id="btn-buka-pendaftaran" class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
+              <button id="btn-tutup-pendaftaran" class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
             </div>
           </div>
         </div>
         <div class="col-12 col-md-6">
           <div class="panel">
-            <div class="panel-header"><h6><i class="fa-solid fa-bullhorn"></i> Status Pengumuman Hasil Seleksi</h6></div>
+            <div class="panel-header"><h6><i class="fa-solid fa-bullhorn"></i> Pengumuman Kelulusan</h6></div>
             <div class="panel-body">
               <p class="mb-3" style="font-size:.9rem;color:#555">Status saat ini:</p>
               <div id="status-pgtr-pengumuman" class="mb-3"><span class="status-off">Memuat...</span></div>
-              <button class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
-              <button class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
+              <button id="btn-buka-pengumuman" class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
+              <button id="btn-tutup-pengumuman" class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
             </div>
           </div>
         </div>
@@ -1261,6 +1261,16 @@ function handleStatusPendaftaran(status) {
     : '<span class="status-off"><i class="fa-solid fa-circle-xmark me-1"></i>DITUTUP</span>';
   if(badgeDash) badgeDash.innerHTML = html;
   if(badgePgtr) badgePgtr.innerHTML = html;
+  var btnBuka  = document.getElementById('btn-buka-pendaftaran');
+  var btnTutup = document.getElementById('btn-tutup-pendaftaran');
+  if (btnBuka && btnTutup) {
+    btnBuka.disabled = on;
+    btnBuka.classList.toggle('btn-success', !on);
+    btnBuka.classList.toggle('btn-secondary', on);
+    btnTutup.disabled = !on;
+    btnTutup.classList.toggle('btn-danger', on);
+    btnTutup.classList.toggle('btn-secondary', !on);
+  }
 }
 
 function handleStatusPengumuman(status) {
@@ -1272,6 +1282,16 @@ function handleStatusPengumuman(status) {
     : '<span class="status-off"><i class="fa-solid fa-circle-xmark me-1"></i>DITUTUP</span>';
   if(el) el.innerHTML = html;
   if(elDash) elDash.innerHTML = html;
+  var btnBukaP  = document.getElementById('btn-buka-pengumuman');
+  var btnTutupP = document.getElementById('btn-tutup-pengumuman');
+  if (btnBukaP && btnTutupP) {
+    btnBukaP.disabled = on;
+    btnBukaP.classList.toggle('btn-success', !on);
+    btnBukaP.classList.toggle('btn-secondary', on);
+    btnTutupP.disabled = !on;
+    btnTutupP.classList.toggle('btn-danger', on);
+    btnTutupP.classList.toggle('btn-secondary', !on);
+  }
 }
 
 function handlePendaftarTerbaru(terbaru) {
@@ -1771,9 +1791,22 @@ function mbpProperSekolah(str) {
   return String(str).split(' ').map(function(word) {
     if (!word) return word;
     if (/^[0-9]+$/.test(word)) return word;
-    var jmlHuruf = word.replace(/[^A-Za-z]/g, '').length;
-    if (jmlHuruf > 0 && jmlHuruf < 5) return word.toUpperCase();
-    return mbpProperCase(word);
+    var subKata = word.split('.');
+    if (subKata.length === 1) {
+      var jmlHuruf = word.replace(/[^A-Za-z]/g, '').length;
+      if (jmlHuruf > 0 && jmlHuruf < 5) return word.toUpperCase();
+      return mbpProperCase(word);
+    }
+    return subKata.map(function(bagian, i) {
+      if (!bagian) return bagian;
+      if (i === 0) {
+        var jh = bagian.replace(/[^A-Za-z]/g, '').length;
+        if (jh > 0 && jh < 5) return bagian.toUpperCase();
+        return mbpProperCase(bagian);
+      }
+      // Bagian setelah titik tanpa spasi: dianggap sambungan kata sebelumnya (huruf kecil)
+      return bagian.toLowerCase();
+    }).join('.');
   }).join(' ');
 }
 function mbpJenisKelamin(lp) {
@@ -1819,7 +1852,7 @@ function lihatBiodataPendaftar(filteredIdx) {
   setTxt('mbp-nisn', r.nisn);
   setTxt('mbp-ttl', mbpFormatTtl(r.ttl));
   setTxt('mbp-agama', mbpProperCase(r.agama));
-  setTxt('mbp-alamat', mbpProperCase(r.alamat));
+  setTxt('mbp-alamat', mbpProperSekolah(r.alamat));
   (function(){ var elA = document.getElementById('mbp-ayah'); if (elA) elA.innerHTML = mbpGabungNamaStatus(r.ayah, r.statusAyah); })();
   setTxt('mbp-pekerjaanayah', mbpProperCase(r.pekerjaanAyah));
   (function(){ var elI = document.getElementById('mbp-ibu'); if (elI) elI.innerHTML = mbpGabungNamaStatus(r.ibu, r.statusIbu); })();
