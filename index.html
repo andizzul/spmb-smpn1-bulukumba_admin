@@ -2166,31 +2166,11 @@ function exportExcel(jalurFilter) {
           return;
         }
 
-        // Susun data untuk Excel dengan header yang rapi
-        var header = ['No', 'Nama Lengkap', 'L/P', 'NISN', 'NIK', 'Tempat Lahir', 'Tanggal Lahir', 'Nama Ayah', 'Nama Ibu', 'Alamat', 'Asal Sekolah', 'Jalur'];
+        // Susun seluruh kolom spreadsheet untuk Excel
+        var header = filtered[0]._headers || [];
         var rows = [header];
-        filtered.forEach(function(r, idx) {
-          // Pisahkan tempat dan tanggal lahir dari field ttl
-          var tempat = '', tgl = '';
-          if(r.ttl) {
-            var ci = r.ttl.lastIndexOf(',');
-            if(ci !== -1) { tempat = r.ttl.substring(0, ci).trim(); tgl = r.ttl.substring(ci+1).trim(); }
-            else { tempat = r.ttl; }
-          }
-          rows.push([
-            idx + 1,
-            r.nama   || '',
-            r.lp     || '',
-            r.nisn   || '',
-            r.nik    || '',
-            tempat,
-            tgl,
-            r.ayah   || '',
-            r.ibu    || '',
-            r.alamat || '',
-            r.sekolah|| '',
-            r.jalur  || ''
-          ]);
+        filtered.forEach(function(r) {
+          rows.push(r._raw || []);
         });
 
         // Buat workbook
@@ -2199,7 +2179,7 @@ function exportExcel(jalurFilter) {
 
         // Lebar kolom otomatis
         var colWidths = header.map(function(h, i) {
-          var max = h.length;
+          var max = String(h || '').length;
           rows.slice(1).forEach(function(row) {
             var cell = String(row[i] || '');
             if(cell.length > max) max = cell.length;
