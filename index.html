@@ -1302,7 +1302,7 @@ function bukaHalaman(pageId) {
   // Load rekap jalur asli dari spreadsheet
   // (loadKuota() dipanggil juga di sini agar kolom Kuota/Sisa Kuota/Status
   // tidak bergantung pada halaman Dashboard yang mungkin belum selesai memuat)
-  if(pageId === 'rekap-jalur') { loadKuota(); loadRekapJalurAsli(); }
+  if(pageId === 'rekap-jalur') { loadRekapJalurAsli(); }
   
   // Tutup sidebar di mobile setelah klik menu
   if(window.innerWidth < 768) {
@@ -1496,31 +1496,11 @@ function handleDashboardData(data) {
     if (pdp && pdp.classList.contains('d-none') === false) {
       renderTabelPendaftar();
     }
-    var rows = data.usia.rows || [];
+    var distribusi = data.usia.distribusi || null;
     var usiaMaks = parseInt(data.usia.usiaMaks, 10);
     if (isNaN(usiaMaks)) usiaMaks = 15;
-    var batasBawah = usiaMaks - 3;
-    if (!rows.length) {
-      renderDistribusiUsia(null, tglAcuan, 0, usiaMaks);
-    } else {
-      var distribusi = { bawah:0, thn0:0, thn1:0, thn2:0, thn3:0, atas:0 };
-      rows.forEach(function(r) {
-        var tglLahirStr = '';
-        if (r.ttl) {
-          var ci = String(r.ttl).lastIndexOf(',');
-          tglLahirStr = ci !== -1 ? String(r.ttl).substring(ci + 1).trim() : '';
-        }
-        var usia = usiaDist_hitungUsia(tglLahirStr, tglAcuan);
-        if (usia === null) return;
-        if      (usia < batasBawah)       distribusi.bawah++;
-        else if (usia === batasBawah)     distribusi.thn0++;
-        else if (usia === batasBawah + 1) distribusi.thn1++;
-        else if (usia === batasBawah + 2) distribusi.thn2++;
-        else if (usia === usiaMaks)       distribusi.thn3++;
-        else                               distribusi.atas++;
-      });
-      renderDistribusiUsia(distribusi, tglAcuan, rows.length, usiaMaks);
-    }
+    var totalUsia = data.usia.total || 0;
+    renderDistribusiUsia(distribusi, tglAcuan, totalUsia, usiaMaks);
   }
 }
 
@@ -2212,6 +2192,12 @@ function loadRekapJalurAsli() {
       .withSuccessHandler(function(data) {
         if(data) {
           dataDummy = data; // Nimpa data dummy lama jadi data aktual dari server
+          if (data.kuota) {
+            document.getElementById('kuota-text-domisili').textContent = data.kuota.Domisili || 0;
+            document.getElementById('kuota-text-prestasi').textContent = data.kuota.Prestasi || 0;
+            document.getElementById('kuota-text-afirmasi').textContent = data.kuota.Afirmasi || 0;
+            document.getElementById('kuota-text-mutasi').textContent = data.kuota.Mutasi || 0;
+          }
           loadRekapDummy(); // Render text/UI menggunakan data yg baru
           renderChartRekap(); // Render Grafik
         }
@@ -2344,9 +2330,22 @@ function renderChartRekap() {
 // ═══════════════════════════════════════════════════════════════
 function muatDataLogin() {
   try {
+    var cachedLogin = null;
+    try { cachedLogin = JSON.parse(localStorage.getItem('spmbAdminLoginData') || 'null'); } catch(e) {}
+    if (cachedLogin) {
+      if (cachedLogin.bgUrl) document.getElementById('login-screen').style.backgroundImage = 'url(' + cachedLogin.bgUrl + ')';
+      if (cachedLogin.jabatan && cachedLogin.jabatan.length) {
+        var cachedSel = document.getElementById('lp-jabatan');
+        cachedSel.innerHTML = '<option value="">-- Pilih Jabatan --</option>';
+        cachedLogin.jabatan.forEach(function(j) {
+          var opt = document.createElement('option'); opt.value = j; opt.textContent = j; cachedSel.appendChild(opt);
+        });
+      }
+    }
     google.script.run
       .withSuccessHandler(function(data) {
         if (!data) return;
+        try { localStorage.setItem('spmbAdminLoginData', JSON.stringify(data)); } catch(e) {}
         // Pasang background dari URL spreadsheet
         if (data.bgUrl) {
           document.getElementById('login-screen').style.backgroundImage = 'url(' + data.bgUrl + ')';
@@ -2491,7 +2490,7 @@ function exportExcel(jalurFilter) {
         if(loadingEl) loadingEl.style.display = 'none';
         alert('Gagal mengambil data: ' + e);
       })
-      .getDataPendaftar();
+      .getDataPendaftar(true);
   } catch(e) {
     if(loadingEl) loadingEl.style.display = 'none';
     alert('Tidak dapat terhubung ke server. Pastikan Anda mengakses melalui Google Apps Script.');
