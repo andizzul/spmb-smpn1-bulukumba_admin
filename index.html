@@ -403,6 +403,27 @@
   /* SCOPE END - Distribusi Usia */
   .btn-outline-orange { color:#fd7e14; border:1px solid #fd7e14; background:transparent; }
   .btn-outline-orange:hover { color:#fff; background:#fd7e14; border-color:#fd7e14; }
+
+
+  /* ── VERIFIKASI ── */
+  .verifikasi-status-btn { border:1px solid #dfe5ec; background:#fff; color:#687386; border-radius:7px; padding:5px 9px; font-size:.72rem; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .verifikasi-status-btn:hover { background:#f7f9fc; border-color:#cbd5e1; }
+  .verifikasi-status-btn.active { color:#fff; border-color:transparent; }
+  .verifikasi-status-btn.active.status-belum { background:#6b7280; }
+  .verifikasi-status-btn.active.status-diterima { background:#198754; }
+  .verifikasi-status-btn.active.status-cadangan { background:#d97706; }
+  .verifikasi-status-btn.active.status-tidak { background:#dc3545; }
+  .verifikasi-status-group { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+  .verifikasi-bulk { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+  .verifikasi-bulk .btn { font-size:.76rem; font-weight:700; }
+  .verifikasi-summary-card { border:1px solid #e8ecf0; border-radius:10px; background:#fff; padding:13px 15px; min-height:76px; }
+  .verifikasi-summary-card .vs-num { font-size:1.25rem; font-weight:800; color:#1e2a38; line-height:1.1; }
+  .verifikasi-summary-card .vs-label { margin-top:5px; font-size:.72rem; color:#7b8491; font-weight:600; }
+  .verifikasi-kirim-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid #edf0f4; background:#fafbfd; }
+  .verifikasi-kirim-bar small { color:#7b8491; font-size:.76rem; }
+  .verifikasi-table th { background:#f5f8fc; color:#1e2a38; white-space:nowrap; }
+  .verifikasi-table td { vertical-align:middle; }
+  .verifikasi-loading { text-align:center; padding:38px 20px; color:#8b95a3; }
 </style>
 </head>
 <body class="needs-login">
@@ -475,6 +496,36 @@
     </li>
 
     <li class="sidebar-section">Sistem</li>
+
+    <!-- 5. Verifikasi (dropdown) -->
+    <li class="nav-item-spmb">
+      <a class="nav-link-spmb" data-bs-toggle="collapse" data-bs-target="#submenu-verifikasi" aria-expanded="false">
+        <i class="fa-solid fa-circle-check nav-icon"></i> Verifikasi
+        <i class="fa-solid fa-chevron-right arrow"></i>
+      </a>
+      <ul class="submenu list-unstyled collapse" id="submenu-verifikasi">
+        <li class="nav-item-spmb">
+          <a class="nav-link-spmb" id="nav-verifikasi-domisili" onclick="bukaHalaman('verifikasi-domisili')">
+            Domisili
+          </a>
+        </li>
+        <li class="nav-item-spmb">
+          <a class="nav-link-spmb" id="nav-verifikasi-prestasi" onclick="bukaHalaman('verifikasi-prestasi')">
+            Prestasi
+          </a>
+        </li>
+        <li class="nav-item-spmb">
+          <a class="nav-link-spmb" id="nav-verifikasi-afirmasi" onclick="bukaHalaman('verifikasi-afirmasi')">
+            Afirmasi
+          </a>
+        </li>
+        <li class="nav-item-spmb">
+          <a class="nav-link-spmb" id="nav-verifikasi-mutasi" onclick="bukaHalaman('verifikasi-mutasi')">
+            Mutasi
+          </a>
+        </li>
+      </ul>
+    </li>
 
     <!-- 5. Pengaturan (dropdown) -->
     <li class="nav-item-spmb">
@@ -738,6 +789,85 @@
           </div>
         </div>
         <div style="padding:10px 20px;border-top:1px solid #f0f0f0;font-size:.8rem;color:#888" id="dp-info-baris">Menampilkan 0 dari 0 data</div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────
+         PAGE: VERIFIKASI
+         ───────────────────────────────────────── -->
+    <div id="page-verifikasi" class="page-content d-none">
+      <div class="page-title"><i class="fa-solid fa-circle-check"></i> Verifikasi Pendaftar</div>
+      <div class="panel">
+        <div class="panel-header" style="flex-wrap:wrap;gap:10px">
+          <div>
+            <h6 style="margin:0;font-size:.95rem;font-weight:700;color:#1e2a38">Verifikasi Jalur <span id="verifikasi-jalur-label">-</span></h6>
+            <small class="text-muted fw-bold" id="verifikasi-subtitle">Memuat data pendaftar...</small>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap">
+            <div style="position:relative">
+              <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.85rem"></i>
+              <input type="text" id="verifikasi-search" class="form-control form-control-sm" placeholder="Cari nama, NISN, kode formulir, sekolah..." style="padding-left:32px;min-width:270px" oninput="verifikasiFilter()">
+            </div>
+            <select id="verifikasi-filter-status" class="form-select form-select-sm" style="width:auto" onchange="verifikasiFilter()">
+              <option value="">Semua Status</option>
+              <option value="Belum Ditentukan">Belum Ditentukan</option>
+              <option value="Diterima">Diterima</option>
+              <option value="Cadangan">Cadangan</option>
+              <option value="Tidak Lulus">Tidak Lulus</option>
+            </select>
+            <select id="verifikasi-items-per-page" class="form-select form-select-sm" style="width:auto" onchange="verifikasiUbahJumlahPerHalaman()">
+              <option value="10">10 / halaman</option>
+              <option value="25">25 / halaman</option>
+              <option value="50">50 / halaman</option>
+              <option value="100">100 / halaman</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-3">
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-total">0</div><div class="vs-label">Total</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-diterima">0</div><div class="vs-label">Diterima</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-cadangan">0</div><div class="vs-label">Cadangan</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-tidak">0</div><div class="vs-label">Tidak Lulus</div></div></div>
+          </div>
+
+          <div class="verifikasi-bulk mb-3">
+            <span style="font-size:.76rem;font-weight:700;color:#5f6b7a;margin-right:2px">Tetapkan semua:</span>
+            <button type="button" class="btn btn-outline-success btn-sm" onclick="verifikasiBulkStatus('Diterima')"><i class="fa-solid fa-check me-1"></i>Diterima</button>
+            <button type="button" class="btn btn-outline-warning btn-sm" onclick="verifikasiBulkStatus('Cadangan')"><i class="fa-solid fa-clock me-1"></i>Cadangan</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="verifikasiBulkStatus('Tidak Lulus')"><i class="fa-solid fa-xmark me-1"></i>Tidak Lulus</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="verifikasiBulkStatus('Belum Ditentukan')"><i class="fa-solid fa-rotate-left me-1"></i>Belum Ditentukan</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered mb-0 verifikasi-table" style="font-size:.82rem;min-width:1050px">
+            <thead>
+              <tr>
+                <th style="width:55px;text-align:center">No.</th>
+                <th style="min-width:150px">Kode Formulir</th>
+                <th style="min-width:180px">Nama</th>
+                <th style="min-width:125px">NISN</th>
+                <th style="width:105px;text-align:center">Jenis Kelamin</th>
+                <th style="width:75px;text-align:center">Usia</th>
+                <th style="min-width:180px">Asal Sekolah</th>
+                <th style="min-width:330px;text-align:center">Status Verifikasi</th>
+              </tr>
+            </thead>
+            <tbody id="verifikasi-tbody">
+              <tr><td colspan="8" class="verifikasi-loading">Pilih jalur Verifikasi untuk memuat data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="verifikasi-info-baris" style="padding:10px 16px;border-top:1px solid #f0f0f0;font-size:.8rem;color:#888">Menampilkan 0 dari 0 data</div>
+        <div class="verifikasi-kirim-bar">
+          <small id="verifikasi-pending-info">Belum ada perubahan yang siap dikirim.</small>
+          <button type="button" id="verifikasi-btn-kirim" class="btn btn-primary btn-sm" onclick="verifikasiKonfirmasiKirim()">
+            <i class="fa-solid fa-paper-plane me-1"></i>Kirim
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1110,7 +1240,11 @@ var PAGE_MAP = {
   'export':                  'page-export',
   'pengaturan-kuota':        'page-pengaturan-kuota',
   'pengaturan-usia':         'page-pengaturan-usia',
-  'pengaturan-pendaftaran':  'page-pengaturan-pendaftaran'
+  'pengaturan-pendaftaran':  'page-pengaturan-pendaftaran',
+  'verifikasi-domisili':      'page-verifikasi',
+  'verifikasi-prestasi':      'page-verifikasi',
+  'verifikasi-afirmasi':      'page-verifikasi',
+  'verifikasi-mutasi':        'page-verifikasi'
 };
 var NAV_MAP = {
   'dashboard':               'nav-dashboard',
@@ -1120,7 +1254,11 @@ var NAV_MAP = {
   'export':                  'nav-export',
   'pengaturan-kuota':        'nav-pgtr-kuota',
   'pengaturan-usia':         'nav-pgtr-usia',
-  'pengaturan-pendaftaran':  'nav-pgtr-pendaftaran'
+  'pengaturan-pendaftaran':  'nav-pgtr-pendaftaran',
+  'verifikasi-domisili':      'nav-verifikasi-domisili',
+  'verifikasi-prestasi':      'nav-verifikasi-prestasi',
+  'verifikasi-afirmasi':      'nav-verifikasi-afirmasi',
+  'verifikasi-mutasi':        'nav-verifikasi-mutasi'
 };
 
 function bukaHalaman(pageId) {
@@ -1138,6 +1276,14 @@ function bukaHalaman(pageId) {
   // Set active nav
   var targetNav = document.getElementById(NAV_MAP[pageId]);
   if(targetNav) targetNav.classList.add('active');
+  // Expand dropdown verifikasi jika sub-menu dipilih
+  if(pageId.indexOf('verifikasi-') === 0) {
+    var subVerifikasi = document.getElementById('submenu-verifikasi');
+    if(subVerifikasi && !subVerifikasi.classList.contains('show')) {
+      new bootstrap.Collapse(subVerifikasi, {toggle: true});
+    }
+    loadVerifikasiJalur(pageId.replace('verifikasi-', ''));
+  }
   // Expand dropdown pengaturan jika sub-menu dipilih
   if(pageId === 'pengaturan-kuota' || pageId === 'pengaturan-usia' || pageId === 'pengaturan-pendaftaran') {
     var sub = document.getElementById('submenu-pengaturan');
@@ -1510,6 +1656,211 @@ function formatTtlAdmin(ttlStr) {
   var tempat = ttlStr.substring(0, commaIdx).trim();
   var tgl    = ttlStr.substring(commaIdx + 1).trim();
   return tempat + ', ' + formatTglAdmin(tgl);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VERIFIKASI PENDAFTAR
+// ═══════════════════════════════════════════════════════════════
+var _verifikasiJalurAktif = '';
+var _verifikasiData = [];
+var _verifikasiFiltered = [];
+var _verifikasiStatus = {};
+var _verifikasiPage = 1;
+var _verifikasiItemsPerPage = 10;
+var _verifikasiTglAcuan = null;
+var _verifikasiLastBatch = [];
+
+function verifikasiStatusClass(status) {
+  if (status === 'Diterima') return 'status-diterima';
+  if (status === 'Cadangan') return 'status-cadangan';
+  if (status === 'Tidak Lulus') return 'status-tidak';
+  return 'status-belum';
+}
+
+function verifikasiGetStatus(kode) {
+  return _verifikasiStatus[kode] || 'Belum Ditentukan';
+}
+
+function verifikasiGetUsia(r) {
+  var ttl = r && r.ttl ? String(r.ttl) : '';
+  var ci = ttl.lastIndexOf(',');
+  var tglLahir = ci !== -1 ? ttl.substring(ci + 1).trim() : '';
+  if (!_verifikasiTglAcuan || !tglLahir) return '-';
+  var usia = usiaDist_hitungUsia(tglLahir, _verifikasiTglAcuan);
+  return usia === null ? '-' : String(usia);
+}
+
+function verifikasiLoadDataSetelahAcuan(jalur) {
+  try {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        _verifikasiTglAcuan = data && data.tglAcuan ? data.tglAcuan : null;
+        window._globalTglAcuan = _verifikasiTglAcuan;
+        verifikasiLoadPendaftar(jalur);
+      })
+      .withFailureHandler(function() {
+        _verifikasiTglAcuan = window._globalTglAcuan || null;
+        verifikasiLoadPendaftar(jalur);
+      })
+      .getUsiaMaksimal();
+  } catch(e) {
+    _verifikasiTglAcuan = window._globalTglAcuan || null;
+    verifikasiLoadPendaftar(jalur);
+  }
+}
+
+function loadVerifikasiJalur(jalur) {
+  _verifikasiJalurAktif = jalur ? jalur.charAt(0).toUpperCase() + jalur.substring(1).toLowerCase() : '';
+  var label = document.getElementById('verifikasi-jalur-label');
+  if (label) label.textContent = _verifikasiJalurAktif;
+  var search = document.getElementById('verifikasi-search');
+  var filterStatus = document.getElementById('verifikasi-filter-status');
+  if (search) search.value = '';
+  if (filterStatus) filterStatus.value = '';
+  _verifikasiPage = 1;
+  var tbody = document.getElementById('verifikasi-tbody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="verifikasi-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data pendaftar...</td></tr>';
+  verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
+}
+
+function verifikasiLoadPendaftar(jalur) {
+  try {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        _verifikasiData = (data || []).filter(function(r) {
+          return String(r.jalur || '').trim().toLowerCase() === String(jalur || '').trim().toLowerCase();
+        });
+        _verifikasiData.forEach(function(r) {
+          if (!_verifikasiStatus[r.kode]) _verifikasiStatus[r.kode] = 'Belum Ditentukan';
+        });
+        verifikasiFilter();
+      })
+      .withFailureHandler(function(e) {
+        var tbody = document.getElementById('verifikasi-tbody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Gagal memuat data: ' + (e && e.message ? e.message : e) + '</td></tr>';
+      })
+      .getDataPendaftar();
+  } catch(e) {
+    var tbody = document.getElementById('verifikasi-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Sistem sedang memuat data...</td></tr>';
+  }
+}
+
+function verifikasiFilter() {
+  _verifikasiPage = 1;
+  var q = String((document.getElementById('verifikasi-search') || {}).value || '').trim().toLowerCase();
+  var statusFilter = String((document.getElementById('verifikasi-filter-status') || {}).value || '');
+  _verifikasiFiltered = _verifikasiData.filter(function(r) {
+    var kode = String(r.kode || '').toLowerCase();
+    var nama = String(r.nama || '').toLowerCase();
+    var nisn = String(r.nisn || '').toLowerCase();
+    var sekolah = String(r.sekolah || '').toLowerCase();
+    var cocok = !q || nama.indexOf(q) !== -1 || nisn.indexOf(q) !== -1 || kode.indexOf(q) !== -1 || sekolah.indexOf(q) !== -1;
+    var statusCocok = !statusFilter || verifikasiGetStatus(r.kode) === statusFilter;
+    return cocok && statusCocok;
+  });
+  verifikasiRender();
+}
+
+function verifikasiPilihStatus(kode, status) {
+  if (!kode) return;
+  _verifikasiStatus[kode] = status;
+  verifikasiRender();
+}
+
+function verifikasiBulkStatus(status) {
+  if (!_verifikasiData.length) return;
+  var label = status === 'Belum Ditentukan' ? 'mengembalikan semua pendaftar menjadi Belum Ditentukan' : 'menetapkan semua pendaftar menjadi ' + status;
+  if (!confirm('Apakah Anda yakin ingin ' + label + '?\n\nPerubahan belum dikirim dan masih dapat diubah kembali.')) return;
+  _verifikasiData.forEach(function(r) { _verifikasiStatus[r.kode] = status; });
+  verifikasiRender();
+}
+
+function verifikasiRenderSummary() {
+  var counts = { 'Belum Ditentukan':0, 'Diterima':0, 'Cadangan':0, 'Tidak Lulus':0 };
+  _verifikasiData.forEach(function(r) { counts[verifikasiGetStatus(r.kode)] = (counts[verifikasiGetStatus(r.kode)] || 0) + 1; });
+  var map = {
+    'verifikasi-count-total': _verifikasiData.length,
+    'verifikasi-count-diterima': counts['Diterima'],
+    'verifikasi-count-cadangan': counts['Cadangan'],
+    'verifikasi-count-tidak': counts['Tidak Lulus']
+  };
+  Object.keys(map).forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = map[id]; });
+  var subtitle = document.getElementById('verifikasi-subtitle');
+  if (subtitle) subtitle.textContent = 'Total ' + _verifikasiData.length + ' pendaftar pada jalur ' + _verifikasiJalurAktif;
+  var pending = 0;
+  _verifikasiData.forEach(function(r) { if (verifikasiGetStatus(r.kode) !== 'Belum Ditentukan') pending++; });
+  var pendingInfo = document.getElementById('verifikasi-pending-info');
+  if (pendingInfo) pendingInfo.textContent = pending ? pending + ' data sudah ditentukan dan siap dikirim.' : 'Belum ada perubahan yang siap dikirim.';
+}
+
+function verifikasiRender() {
+  var tbody = document.getElementById('verifikasi-tbody');
+  var info = document.getElementById('verifikasi-info-baris');
+  if (!tbody) return;
+  verifikasiRenderSummary();
+  if (!_verifikasiFiltered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data yang cocok</td></tr>';
+    if (info) info.textContent = 'Tidak ada data';
+    return;
+  }
+  var totalPages = Math.ceil(_verifikasiFiltered.length / _verifikasiItemsPerPage);
+  if (_verifikasiPage > totalPages) _verifikasiPage = totalPages;
+  if (_verifikasiPage < 1) _verifikasiPage = 1;
+  var startIdx = (_verifikasiPage - 1) * _verifikasiItemsPerPage;
+  var endIdx = Math.min(startIdx + _verifikasiItemsPerPage, _verifikasiFiltered.length);
+  var pageData = _verifikasiFiltered.slice(startIdx, endIdx);
+  tbody.innerHTML = pageData.map(function(r, idx) {
+    var status = verifikasiGetStatus(r.kode);
+    var statusHtml = ['Belum Ditentukan','Diterima','Cadangan','Tidak Lulus'].map(function(s) {
+      var cls = verifikasiStatusClass(s);
+      var active = status === s ? ' active' : '';
+      return '<button type="button" class="verifikasi-status-btn ' + cls + active + '" onclick="verifikasiPilihStatus(' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
+    }).join('');
+    return '<tr>' +
+      '<td class="text-center">' + (startIdx + idx + 1) + '</td>' +
+      '<td>' + (r.kode || '-') + '</td>' +
+      '<td><strong>' + (r.nama || '-') + '</strong></td>' +
+      '<td>' + (r.nisn || '-') + '</td>' +
+      '<td class="text-center">' + (r.lp || '-') + '</td>' +
+      '<td class="text-center fw-bold">' + verifikasiGetUsia(r) + '</td>' +
+      '<td>' + (r.sekolah || '-') + '</td>' +
+      '<td><div class="verifikasi-status-group">' + statusHtml + '</div></td>' +
+    '</tr>';
+  }).join('');
+  if (info) info.innerHTML = '<div class="d-flex justify-content-between align-items-center w-100"><span>Menampilkan <b>' + (startIdx + 1) + '-' + endIdx + '</b> dari <b>' + _verifikasiFiltered.length + '</b> data pencarian</span><div class="btn-group"><button class="btn btn-sm btn-outline-secondary" onclick="verifikasiChangePage(-1)" ' + (_verifikasiPage === 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button><span class="btn btn-sm btn-secondary disabled">Hal ' + _verifikasiPage + ' / ' + totalPages + '</span><button class="btn btn-sm btn-outline-secondary" onclick="verifikasiChangePage(1)" ' + (_verifikasiPage === totalPages ? 'disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div></div>';
+}
+
+function verifikasiChangePage(dir) {
+  _verifikasiPage += dir;
+  verifikasiRender();
+}
+
+function verifikasiUbahJumlahPerHalaman() {
+  var el = document.getElementById('verifikasi-items-per-page');
+  _verifikasiItemsPerPage = parseInt(el ? el.value : '10', 10) || 10;
+  _verifikasiPage = 1;
+  verifikasiRender();
+}
+
+function verifikasiKonfirmasiKirim() {
+  var batch = _verifikasiData.filter(function(r) { return verifikasiGetStatus(r.kode) !== 'Belum Ditentukan'; }).map(function(r) {
+    return { kode: r.kode, nama: r.nama, nisn: r.nisn, jalur: r.jalur, status: verifikasiGetStatus(r.kode) };
+  });
+  if (!batch.length) {
+    alert('Belum ada status yang ditentukan. Data dengan status "Belum Ditentukan" tidak dapat dikirim.');
+    return;
+  }
+  var diterima = batch.filter(function(r){ return r.status === 'Diterima'; }).length;
+  var cadangan = batch.filter(function(r){ return r.status === 'Cadangan'; }).length;
+  var tidak = batch.filter(function(r){ return r.status === 'Tidak Lulus'; }).length;
+  var pesan = 'Anda akan mengirim ' + batch.length + ' data verifikasi untuk jalur ' + _verifikasiJalurAktif + '.\n\nDiterima: ' + diterima + '\nCadangan: ' + cadangan + '\nTidak Lulus: ' + tidak + '\n\nData "Belum Ditentukan" tidak ikut dikirim.\n\nLanjutkan?';
+  if (!confirm(pesan)) return;
+
+  // Tahap ini sengaja hanya menyiapkan batch di sisi halaman. Penyimpanan
+  // permanen belum dihubungkan sesuai ruang lingkup pekerjaan saat ini.
+  _verifikasiLastBatch = batch;
+  alert('Batch verifikasi sudah disiapkan (' + batch.length + ' data). Koneksi penyimpanan hasil verifikasi belum diaktifkan pada tahap ini.');
 }
 
 // ═══════════════════════════════════════════════════════════════
