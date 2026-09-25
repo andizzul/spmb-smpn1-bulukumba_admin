@@ -413,9 +413,21 @@
   .verifikasi-status-btn.active.status-diterima { background:#198754; }
   .verifikasi-status-btn.active.status-cadangan { background:#d97706; }
   .verifikasi-status-btn.active.status-tidak { background:#dc3545; }
-  .verifikasi-status-group { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+  .verifikasi-status-group { position:relative; display:flex; justify-content:center; }
+  .verifikasi-status-current { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-width:132px; }
+  .verifikasi-status-current i { font-size:.68rem; opacity:.9; }
+  .verifikasi-status-menu { position:absolute; top:calc(100% + 4px); right:50%; transform:translateX(50%); z-index:20; display:none; min-width:150px; padding:4px; background:#fff; border:1px solid #dfe5ec; border-radius:8px; box-shadow:0 8px 20px rgba(30,42,56,.12); }
+  .verifikasi-status-menu.show { display:block; }
+  .verifikasi-status-option { display:block; width:100%; border:0; background:#fff; color:#4b5563; text-align:left; border-radius:6px; padding:7px 9px; font-size:.72rem; font-weight:700; cursor:pointer; }
+  .verifikasi-status-option:hover { background:#f5f8fc; }
   .verifikasi-bulk { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
   .verifikasi-bulk .btn { font-size:.76rem; font-weight:700; }
+  .verifikasi-bulk-menu { position:relative; }
+  .verifikasi-bulk-toggle { font-size:.76rem; font-weight:800; }
+  .verifikasi-bulk-options { position:absolute; top:calc(100% + 4px); right:0; z-index:30; display:none; min-width:190px; padding:5px; background:#fff; border:1px solid #dfe5ec; border-radius:9px; box-shadow:0 8px 20px rgba(30,42,56,.14); }
+  .verifikasi-bulk-options.show { display:block; }
+  .verifikasi-bulk-option { display:block; width:100%; border:0; background:#fff; color:#4b5563; text-align:left; border-radius:6px; padding:8px 10px; font-size:.76rem; font-weight:700; cursor:pointer; }
+  .verifikasi-bulk-option:hover { background:#f5f8fc; }
   .verifikasi-summary-card { border:1px solid #e8ecf0; border-radius:10px; background:#fff; padding:13px 15px; min-height:76px; }
   .verifikasi-summary-card .vs-num { font-size:1.25rem; font-weight:800; color:#1e2a38; line-height:1.1; }
   .verifikasi-summary-card .vs-label { margin-top:5px; font-size:.72rem; color:#7b8491; font-weight:600; }
@@ -832,13 +844,6 @@
             <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-tidak">0</div><div class="vs-label">Tidak Lulus</div></div></div>
           </div>
 
-          <div class="verifikasi-bulk mb-3">
-            <span style="font-size:.76rem;font-weight:700;color:#5f6b7a;margin-right:2px">Tetapkan semua:</span>
-            <button type="button" class="btn btn-outline-success btn-sm" onclick="verifikasiBulkStatus('Diterima')"><i class="fa-solid fa-check me-1"></i>Diterima</button>
-            <button type="button" class="btn btn-outline-warning btn-sm" onclick="verifikasiBulkStatus('Cadangan')"><i class="fa-solid fa-clock me-1"></i>Cadangan</button>
-            <button type="button" class="btn btn-outline-danger btn-sm" onclick="verifikasiBulkStatus('Tidak Lulus')"><i class="fa-solid fa-xmark me-1"></i>Tidak Lulus</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="verifikasiBulkStatus('Belum Ditentukan')"><i class="fa-solid fa-rotate-left me-1"></i>Belum Ditentukan</button>
-          </div>
         </div>
 
         <div class="table-responsive">
@@ -846,13 +851,26 @@
             <thead>
               <tr>
                 <th style="width:55px;text-align:center">No.</th>
-                <th style="min-width:150px">Kode Formulir</th>
-                <th style="min-width:180px">Nama</th>
-                <th style="min-width:125px">NISN</th>
-                <th style="width:105px;text-align:center">Jenis Kelamin</th>
+                <th style="min-width:150px;text-align:center">Kode Formulir</th>
+                <th style="min-width:180px;text-align:center">Nama</th>
+                <th style="min-width:125px;text-align:center">NISN</th>
+                <th style="width:70px;text-align:center">Jenis<br>Kelamin</th>
                 <th style="width:75px;text-align:center">Usia</th>
-                <th style="min-width:180px">Asal Sekolah</th>
-                <th style="min-width:330px;text-align:center">Status Verifikasi</th>
+                <th style="min-width:180px;text-align:center">Asal Sekolah</th>
+                <th style="min-width:175px;text-align:center">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                    <span>Status Verifikasi</span>
+                    <div class="verifikasi-bulk-menu">
+                      <button type="button" class="btn btn-primary btn-sm verifikasi-bulk-toggle" title="Tetapkan Semua" onclick="verifikasiToggleBulkMenu(event)"><i class="fa-solid fa-layer-group"></i></button>
+                      <div id="verifikasi-bulk-options" class="verifikasi-bulk-options">
+                        <button type="button" class="verifikasi-bulk-option" onclick="verifikasiBulkStatus('Diterima')">Diterima</button>
+                        <button type="button" class="verifikasi-bulk-option" onclick="verifikasiBulkStatus('Cadangan')">Cadangan</button>
+                        <button type="button" class="verifikasi-bulk-option" onclick="verifikasiBulkStatus('Tidak Lulus')">Tidak Lulus</button>
+                        <button type="button" class="verifikasi-bulk-option" onclick="verifikasiBulkStatus('Belum Ditentukan')">Belum Ditentukan</button>
+                      </div>
+                    </div>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody id="verifikasi-tbody">
@@ -1742,6 +1760,30 @@ function verifikasiFilter() {
   verifikasiRender();
 }
 
+function verifikasiToggleStatusMenu(event) {
+  if (event) event.stopPropagation();
+  var current = event && event.currentTarget ? event.currentTarget : null;
+  var menu = current ? current.nextElementSibling : null;
+  if (!menu) return;
+  document.querySelectorAll('.verifikasi-status-menu.show').forEach(function(el) {
+    if (el !== menu) el.classList.remove('show');
+  });
+  menu.classList.toggle('show');
+}
+
+function verifikasiToggleBulkMenu(event) {
+  if (event) event.stopPropagation();
+  var menu = document.getElementById('verifikasi-bulk-options');
+  if (!menu) return;
+  menu.classList.toggle('show');
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.verifikasi-status-menu.show, .verifikasi-bulk-options.show').forEach(function(el) {
+    el.classList.remove('show');
+  });
+});
+
 function verifikasiPilihStatus(kode, status) {
   if (!kode) return;
   _verifikasiStatus[kode] = status;
@@ -1792,16 +1834,18 @@ function verifikasiRender() {
   var pageData = _verifikasiFiltered.slice(startIdx, endIdx);
   tbody.innerHTML = pageData.map(function(r, idx) {
     var status = verifikasiGetStatus(r.kode);
-    var statusHtml = ['Belum Ditentukan','Diterima','Cadangan','Tidak Lulus'].map(function(s) {
-      var cls = verifikasiStatusClass(s);
-      var active = status === s ? ' active' : '';
-      return '<button type="button" class="verifikasi-status-btn ' + cls + active + '" onclick="verifikasiPilihStatus(' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
-    }).join('');
+    var statusCls = verifikasiStatusClass(status);
+    var statusHtml = '<button type="button" class="verifikasi-status-btn verifikasi-status-current ' + statusCls + ' active" onclick="verifikasiToggleStatusMenu(event)">' + status + ' <i class="fa-solid fa-pen"></i></button>' +
+      '<div class="verifikasi-status-menu">' +
+      ['Belum Ditentukan','Diterima','Cadangan','Tidak Lulus'].map(function(s) {
+        return '<button type="button" class="verifikasi-status-option" onclick="verifikasiPilihStatus(' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
+      }).join('') +
+      '</div>';
     return '<tr>' +
       '<td class="text-center">' + (startIdx + idx + 1) + '</td>' +
-      '<td>' + (r.kode || '-') + '</td>' +
+      '<td class="text-center">' + (r.kode || '-') + '</td>' +
       '<td><strong>' + (r.nama || '-') + '</strong></td>' +
-      '<td>' + (r.nisn || '-') + '</td>' +
+      '<td class="text-center">' + (r.nisn || '-') + '</td>' +
       '<td class="text-center">' + (r.lp || '-') + '</td>' +
       '<td class="text-center fw-bold">' + verifikasiGetUsia(r) + '</td>' +
       '<td>' + (r.sekolah || '-') + '</td>' +
