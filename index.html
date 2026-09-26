@@ -1718,7 +1718,7 @@ function loadVerifikasiJalur(jalur) {
   if (filterStatus) filterStatus.value = '';
   _verifikasiPage = 1;
   var countIds = ['verifikasi-count-total','verifikasi-count-diterima','verifikasi-count-cadangan','verifikasi-count-tidak'];
-  countIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = 'Memuat data'; });
+  countIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.innerHTML = '<span style="font-size:.9rem;font-weight:600;color:#8b95a3"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data</span>'; });
   var tbody = document.getElementById('verifikasi-tbody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="verifikasi-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data pendaftar...</td></tr>';
   verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
@@ -1787,17 +1787,19 @@ document.addEventListener('click', function() {
   });
 });
 
-function verifikasiPilihStatus(kode, status) {
+function verifikasiPilihStatus(event, kode, status) {
+  if (event) event.stopPropagation();
   if (!kode) return;
   var key = String(kode);
-  _verifikasiStatus[key] = String(status);
+  var nilaiStatus = String(status);
+  _verifikasiStatus[key] = nilaiStatus;
   for (var i = 0; i < _verifikasiData.length; i++) {
     if (String(_verifikasiData[i].kode || '') === key) {
-      _verifikasiData[i]._verifikasiStatus = String(status);
+      _verifikasiData[i]._verifikasiStatus = nilaiStatus;
       break;
     }
   }
-  verifikasiRender();
+  verifikasiFilter();
 }
 
 function verifikasiBulkStatus(status) {
@@ -1848,7 +1850,7 @@ function verifikasiRender() {
     var statusHtml = '<button type="button" class="verifikasi-status-btn verifikasi-status-current ' + statusCls + ' active" onclick="verifikasiToggleStatusMenu(event)">' + status + ' <i class="fa-solid fa-pen"></i></button>' +
       '<div class="verifikasi-status-menu">' +
       ['Belum Ditentukan','Diterima','Cadangan','Tidak Lulus'].map(function(s) {
-        return '<button type="button" class="verifikasi-status-option" onclick="verifikasiPilihStatus(' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
+        return '<button type="button" class="verifikasi-status-option" onclick="verifikasiPilihStatus(event,' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
       }).join('') +
       '</div>';
     return '<tr>' +
