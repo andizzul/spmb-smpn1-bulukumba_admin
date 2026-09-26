@@ -433,7 +433,7 @@
   .verifikasi-summary-card .vs-label { margin-top:5px; font-size:.72rem; color:#7b8491; font-weight:600; }
   .verifikasi-kirim-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid #edf0f4; background:#fafbfd; }
   .verifikasi-kirim-bar small { color:#7b8491; font-size:.76rem; }
-  .verifikasi-table th { background:#f5f8fc; color:#1e2a38; white-space:nowrap; }
+  .verifikasi-table th { background:#f5f8fc; color:#1e2a38; white-space:nowrap; vertical-align:middle; }
   .verifikasi-table td { vertical-align:middle; }
   .verifikasi-loading { text-align:center; padding:38px 20px; color:#8b95a3; }
 </style>
@@ -1676,7 +1676,8 @@ function verifikasiStatusClass(status) {
 }
 
 function verifikasiGetStatus(kode) {
-  return _verifikasiStatus[kode] || 'Belum Ditentukan';
+  var key = String(kode || '');
+  return _verifikasiStatus[key] || 'Belum Ditentukan';
 }
 
 function verifikasiGetUsia(r) {
@@ -1716,6 +1717,8 @@ function loadVerifikasiJalur(jalur) {
   if (search) search.value = '';
   if (filterStatus) filterStatus.value = '';
   _verifikasiPage = 1;
+  var countIds = ['verifikasi-count-total','verifikasi-count-diterima','verifikasi-count-cadangan','verifikasi-count-tidak'];
+  countIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = 'Memuat data'; });
   var tbody = document.getElementById('verifikasi-tbody');
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="verifikasi-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data pendaftar...</td></tr>';
   verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
@@ -1786,7 +1789,14 @@ document.addEventListener('click', function() {
 
 function verifikasiPilihStatus(kode, status) {
   if (!kode) return;
-  _verifikasiStatus[kode] = status;
+  var key = String(kode);
+  _verifikasiStatus[key] = String(status);
+  for (var i = 0; i < _verifikasiData.length; i++) {
+    if (String(_verifikasiData[i].kode || '') === key) {
+      _verifikasiData[i]._verifikasiStatus = String(status);
+      break;
+    }
+  }
   verifikasiRender();
 }
 
