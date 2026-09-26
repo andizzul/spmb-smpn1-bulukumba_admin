@@ -1850,7 +1850,7 @@ function verifikasiRender() {
     var statusHtml = '<button type="button" class="verifikasi-status-btn verifikasi-status-current ' + statusCls + ' active" onclick="verifikasiToggleStatusMenu(event)">' + status + ' <i class="fa-solid fa-pen"></i></button>' +
       '<div class="verifikasi-status-menu">' +
       ['Belum Ditentukan','Diterima','Cadangan','Tidak Lulus'].map(function(s) {
-        return '<button type="button" class="verifikasi-status-option" onclick="verifikasiPilihStatus(event,' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')">' + s + '</button>';
+        return '<button type="button" class="verifikasi-status-option" onclick=\'verifikasiPilihStatus(event,' + JSON.stringify(String(r.kode || '')) + ',' + JSON.stringify(s) + ')\'>' + s + '</button>';
       }).join('') +
       '</div>';
     return '<tr>' +
