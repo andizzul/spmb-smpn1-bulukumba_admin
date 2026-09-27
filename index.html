@@ -431,6 +431,12 @@
   .verifikasi-summary-card { border:1px solid #e8ecf0; border-radius:10px; background:#fff; padding:13px 15px; min-height:76px; }
   .verifikasi-summary-card .vs-num { font-size:1.25rem; font-weight:800; color:#1e2a38; line-height:1.1; }
   .verifikasi-summary-card .vs-label { margin-top:5px; font-size:.72rem; color:#7b8491; font-weight:600; }
+  .verifikasi-summary-card.vs-diterima { border-left:4px solid #198754; }
+  .verifikasi-summary-card.vs-diterima .vs-num { color:#198754; }
+  .verifikasi-summary-card.vs-cadangan { border-left:4px solid #d97706; }
+  .verifikasi-summary-card.vs-cadangan .vs-num { color:#d97706; }
+  .verifikasi-summary-card.vs-tidak { border-left:4px solid #dc3545; }
+  .verifikasi-summary-card.vs-tidak .vs-num { color:#dc3545; }
   .verifikasi-kirim-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid #edf0f4; background:#fafbfd; }
   .verifikasi-kirim-bar small { color:#7b8491; font-size:.76rem; }
   .verifikasi-table th { background:#f5f8fc; color:#1e2a38; white-space:nowrap; vertical-align:middle; }
@@ -827,21 +833,15 @@
               <option value="Cadangan">Cadangan</option>
               <option value="Tidak Lulus">Tidak Lulus</option>
             </select>
-            <select id="verifikasi-items-per-page" class="form-select form-select-sm" style="width:auto" onchange="verifikasiUbahJumlahPerHalaman()">
-              <option value="10">10 / halaman</option>
-              <option value="25">25 / halaman</option>
-              <option value="50">50 / halaman</option>
-              <option value="100">100 / halaman</option>
-            </select>
           </div>
         </div>
 
         <div class="p-3">
           <div class="row g-2 mb-3">
             <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-total">0</div><div class="vs-label">Total</div></div></div>
-            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-diterima">0</div><div class="vs-label">Diterima</div></div></div>
-            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-cadangan">0</div><div class="vs-label">Cadangan</div></div></div>
-            <div class="col-6 col-md-3"><div class="verifikasi-summary-card"><div class="vs-num" id="verifikasi-count-tidak">0</div><div class="vs-label">Tidak Lulus</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card vs-diterima"><div class="vs-num" id="verifikasi-count-diterima">0</div><div class="vs-label">Diterima</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card vs-cadangan"><div class="vs-num" id="verifikasi-count-cadangan">0</div><div class="vs-label">Cadangan</div></div></div>
+            <div class="col-6 col-md-3"><div class="verifikasi-summary-card vs-tidak"><div class="vs-num" id="verifikasi-count-tidak">0</div><div class="vs-label">Tidak Lulus</div></div></div>
           </div>
 
         </div>
@@ -879,7 +879,15 @@
           </table>
         </div>
 
-        <div id="verifikasi-info-baris" style="padding:10px 16px;border-top:1px solid #f0f0f0;font-size:.8rem;color:#888">Menampilkan 0 dari 0 data</div>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:10px 16px;border-top:1px solid #f0f0f0">
+          <select id="verifikasi-items-per-page" class="form-select form-select-sm" style="width:auto" onchange="verifikasiUbahJumlahPerHalaman()">
+            <option value="10">10 / halaman</option>
+            <option value="25">25 / halaman</option>
+            <option value="50">50 / halaman</option>
+            <option value="100">100 / halaman</option>
+          </select>
+          <div id="verifikasi-info-baris" style="flex:1;font-size:.8rem;color:#888">Menampilkan 0 dari 0 data</div>
+        </div>
         <div class="verifikasi-kirim-bar">
           <small id="verifikasi-pending-info">Belum ada perubahan yang siap dikirim.</small>
           <button type="button" id="verifikasi-btn-kirim" class="btn btn-primary btn-sm" onclick="verifikasiKonfirmasiKirim()">
