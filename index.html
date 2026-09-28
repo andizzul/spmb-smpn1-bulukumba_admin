@@ -464,6 +464,12 @@
   .lbl-prev.has-img i { display:none; }
   .lbl-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:auto; }
   .lbl-status { font-size:.74rem; font-weight:700; color:#198754; }
+  .lbl-col { display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; }
+  .lbl-akun-label { font-size:.68rem; font-weight:700; color:#8b95a3; text-transform:uppercase; letter-spacing:.03em; }
+  .lbl-hint { font-size:.72rem; color:#8b95a3; line-height:1.4; }
+  .lbl-nama-prev { background:var(--sidebar-bg,#1e2a38); color:#fff; border-radius:10px; padding:9px 16px; font-size:.82rem; font-weight:700; line-height:1.25; min-width:170px; max-width:220px; flex-shrink:0; }
+  .lbl-nama-prev span { display:block; overflow-wrap:anywhere; }
+  #brand-text { min-width:0; overflow-wrap:anywhere; }
 </style>
 </head>
 <body class="needs-login">
@@ -474,8 +480,8 @@
 <div id="login-screen">
   <div class="login-panel">
     <div class="lp-logo"><img id="lp-logo-img" alt="Logo Sekolah"><i class="fa-solid fa-shield-halved"></i></div>
-    <h4>Admin SPMB</h4>
-    <p class="lp-sub">SMPN 1 Bulukumba — Panel Panitia</p>
+    <h4 id="lp-title">Admin SPMB</h4>
+    <p class="lp-sub" id="lp-sub">SMPN 1 Bulukumba — Panel Panitia</p>
 
     <label for="lp-jabatan">Pilih Jabatan</label>
     <select id="lp-jabatan">
@@ -502,7 +508,7 @@
   <div class="sidebar-brand">
     <img class="brand-logo-img" id="brand-logo-img" alt="Logo">
     <div class="brand-icon"><i class="fa-solid fa-school"></i></div>
-    <span>SPMB SMPN 1<br>Bulukumba</span>
+    <span id="brand-text">SPMB<br>SMPN 1 Bulukumba</span>
   </div>
 
   <ul class="list-unstyled mb-0" style="flex:1">
@@ -617,7 +623,7 @@
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:12px">
     <button id="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-    <span class="brand">SPMB SMPN 1 Bulukumba</span>
+    <span class="brand" id="topbar-brand">SPMB SMPN 1 Bulukumba</span>
   </div>
   <div class="admin-info">
     <img class="admin-foto-img" id="topbar-foto-img" alt="Foto">
@@ -2132,14 +2138,53 @@ function labelTerapkanGambar(url, imgEl, wrapEl, kelasAktif) {
   imgEl.src = String(url).trim();
 }
 
+// Akun yang sedang login (jabatan) — dipakai sebagai kunci foto per akun
+function labelAkunAktif() {
+  try { return sessionStorage.getItem('adminJabatan') || ''; } catch (e) { return ''; }
+}
+function labelFotoAkun(c, akun) {
+  var m = (c && c.fotoMap) || {};
+  return akun ? (m[akun] || '') : '';
+}
+
+// Pecah nama aplikasi: kata pertama = baris atas, sisanya = baris bawah
+function labelPecahNama(nama) {
+  var t = String(nama || '').trim().replace(/\s+/g, ' ');
+  var i = t.indexOf(' ');
+  return i === -1 ? { atas: t, bawah: '' } : { atas: t.substring(0, i), bawah: t.substring(i + 1) };
+}
+function labelTerapkanNama() {
+  var t = String(labelBaca().appName || '').trim();
+  if (!t) return;
+  var p = labelPecahNama(t);
+  var brand = document.getElementById('brand-text');
+  if (brand) {
+    brand.textContent = '';
+    brand.appendChild(document.createTextNode(p.atas));
+    if (p.bawah) {
+      brand.appendChild(document.createElement('br'));
+      brand.appendChild(document.createTextNode(p.bawah));
+    }
+  }
+  var lt = document.getElementById('lp-title');
+  if (lt) lt.textContent = 'Admin ' + p.atas;
+  var ls = document.getElementById('lp-sub');
+  if (ls) ls.textContent = (p.bawah ? p.bawah + ' — ' : '') + 'Panel Panitia';
+  var tb = document.getElementById('topbar-brand');
+  if (tb) tb.textContent = t;
+  document.title = 'Admin ' + t;
+}
+
 function labelTerapkanSemua() {
   var c = labelBaca();
   labelTerapkanGambar(c.logo, document.getElementById('brand-logo-img'), document.querySelector('#sidebar .sidebar-brand'), 'has-logo');
   labelTerapkanGambar(c.logo, document.getElementById('lp-logo-img'), document.querySelector('.login-panel .lp-logo'), 'has-logo');
-  labelTerapkanGambar(c.foto, document.getElementById('topbar-foto-img'), document.querySelector('#topbar .admin-info'), 'has-foto');
+  labelTerapkanGambar(labelFotoAkun(c, labelAkunAktif()), document.getElementById('topbar-foto-img'), document.querySelector('#topbar .admin-info'), 'has-foto');
+  labelTerapkanNama();
 }
 
 // Langsung diterapkan saat halaman dibuka (dari cache) — termasuk di layar login
+labelTerapkanNama();
 document.addEventListener('DOMContentLoaded', labelTerapkanSemua);
 
 function labelPreview(key, url) {
@@ -3006,6 +3051,19 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
       <div class="modal-body" style="background:#f8fafc">
         <div class="row g-3">
+          <div class="col-12">
+            <div class="lbl-field">
+              <div class="lbl-head"><i class="fa-solid fa-heading"></i>Nama Aplikasi<small>Tampil di halaman login, sidebar, bagian atas halaman, dan judul tab browser</small></div>
+              <div class="lbl-body">
+                <div class="lbl-nama-prev" id="lbl-prev-nama"><span>SPMB</span><span>SMPN 1 Bulukumba</span></div>
+                <div class="lbl-col">
+                  <input type="text" class="form-control form-control-sm" id="lbl-input-nama" maxlength="40" placeholder="Contoh: SPMB SMPN 1 Bulukumba" autocomplete="off" spellcheck="false" oninput="labelInputNama()">
+                  <div class="lbl-hint">Kata pertama tampil di baris atas, sisanya di baris bawah. Halaman login menambahkan “Admin” di depan dan “— Panel Panitia” di belakang.</div>
+                </div>
+              </div>
+              <div class="lbl-foot"><span class="lbl-status" id="lbl-status-nama"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-nama" disabled onclick="simpanLabelNama()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
+            </div>
+          </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
               <div class="lbl-head"><i class="fa-solid fa-school"></i>URL Logo Sekolah<small>Tampil di sidebar &amp; halaman login</small></div>
@@ -3018,10 +3076,14 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-circle-user"></i>URL Foto Pengguna<small>Tampil di samping nama pengguna</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-circle-user"></i>URL Foto Pengguna<small>Setiap akun punya foto sendiri (tampil di samping nama)</small></div>
               <div class="lbl-body">
                 <div class="lbl-prev lbl-prev-round" id="lbl-prev-foto"><i class="fa-regular fa-image"></i><img alt=""></div>
-                <input type="text" class="form-control form-control-sm" id="lbl-input-foto" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('foto')">
+                <div class="lbl-col">
+                  <div class="lbl-akun-label">Pemilik foto</div>
+                  <select class="form-select form-select-sm" id="lbl-akun-foto" aria-label="Pemilik foto" onchange="labelGantiAkunFoto()"></select>
+                  <input type="text" class="form-control form-control-sm" id="lbl-input-foto" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('foto')">
+                </div>
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-foto"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-foto" disabled onclick="simpanLabel('foto')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
