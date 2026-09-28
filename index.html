@@ -442,6 +442,28 @@
   .verifikasi-table th { background:#f5f8fc; color:#1e2a38; white-space:nowrap; vertical-align:middle; }
   .verifikasi-table td { vertical-align:middle; }
   .verifikasi-loading { text-align:center; padding:38px 20px; color:#8b95a3; }
+  /* ── LABEL / GAMBAR DINAMIS (logo sekolah, foto pengguna) ── */
+  #sidebar .sidebar-brand .brand-logo-img { display:none; width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0; background:#fff; border:2px solid rgba(255,255,255,.85); box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  #sidebar .sidebar-brand.has-logo .brand-logo-img { display:block; }
+  #sidebar .sidebar-brand.has-logo .brand-icon { display:none; }
+  #topbar .admin-info .admin-foto-img { display:none; width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #fff; box-shadow:0 0 0 1px #e2e8f0, 0 2px 6px rgba(0,0,0,.15); }
+  #topbar .admin-info.has-foto .admin-foto-img { display:block; }
+  #topbar .admin-info.has-foto > i { display:none; }
+  .login-panel .lp-logo img { display:none; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+  .login-panel .lp-logo.has-logo img { display:block; }
+  .login-panel .lp-logo.has-logo i { display:none; }
+  .lbl-field { border:1px solid #e8ecf0; border-radius:12px; padding:14px; background:#fff; height:100%; display:flex; flex-direction:column; gap:12px; }
+  .lbl-head { font-size:.85rem; font-weight:700; color:#1e2a38; }
+  .lbl-head i { color:#3b82f6; margin-right:6px; }
+  .lbl-head small { display:block; margin-top:2px; font-size:.72rem; font-weight:600; color:#8b95a3; }
+  .lbl-body { display:flex; align-items:center; gap:12px; }
+  .lbl-prev { width:56px; height:56px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9; color:#94a3b8; font-size:1.3rem; overflow:hidden; border:1px solid #e2e8f0; border-radius:12px; }
+  .lbl-prev.lbl-prev-round { border-radius:50%; }
+  .lbl-prev img { display:none; width:100%; height:100%; object-fit:cover; }
+  .lbl-prev.has-img img { display:block; }
+  .lbl-prev.has-img i { display:none; }
+  .lbl-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:auto; }
+  .lbl-status { font-size:.74rem; font-weight:700; color:#198754; }
 </style>
 </head>
 <body class="needs-login">
@@ -451,7 +473,7 @@
      ═══════════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-panel">
-    <div class="lp-logo"><i class="fa-solid fa-shield-halved"></i></div>
+    <div class="lp-logo"><img id="lp-logo-img" alt="Logo Sekolah"><i class="fa-solid fa-shield-halved"></i></div>
     <h4>Admin SPMB</h4>
     <p class="lp-sub">SMPN 1 Bulukumba — Panel Panitia</p>
 
@@ -478,6 +500,7 @@
      ═══════════════════════════════════════════════ -->
 <nav id="sidebar">
   <div class="sidebar-brand">
+    <img class="brand-logo-img" id="brand-logo-img" alt="Logo">
     <div class="brand-icon"><i class="fa-solid fa-school"></i></div>
     <span>SPMB SMPN 1<br>Bulukumba</span>
   </div>
@@ -567,6 +590,11 @@
             Buka/Tutup Akses
           </a>
         </li>
+        <li class="nav-item-spmb">
+          <a class="nav-link-spmb" id="nav-pgtr-label" onclick="bukaModalLabel()">
+            Label
+          </a>
+        </li>
       </ul>
     </li>
   </ul>
@@ -592,6 +620,7 @@
     <span class="brand">SPMB SMPN 1 Bulukumba</span>
   </div>
   <div class="admin-info">
+    <img class="admin-foto-img" id="topbar-foto-img" alt="Foto">
     <i class="fa-solid fa-circle-user"></i>
     <span>Halo, <strong id="namaAdmin">Panitia</strong></span>
   </div>
@@ -2076,6 +2105,99 @@ function changePage(dir) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+//  PENAMBAHAN FITUR: LABEL / GAMBAR DINAMIS (logo sekolah, foto pengguna)
+//  CATATAN: untuk sementara URL hanya disimpan di browser ini (localStorage,
+//  kunci 'spmbAdminLabelLocal'), belum tersambung ke spreadsheet.
+//  Logo & foto langsung diterapkan + di-cache; kedua background baru disimpan.
+// ═══════════════════════════════════════════════════════════════
+var LABEL_CACHE_KEY = 'spmbAdminLabelLocal';
+
+function labelBaca() {
+  try { return JSON.parse(localStorage.getItem(LABEL_CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function labelTulis(obj) {
+  try { localStorage.setItem(LABEL_CACHE_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+function labelUrlValid(u) {
+  return /^https:\/\/\S+$/i.test(String(u || '').trim());
+}
+
+// Pasang gambar ke <img>; ikon lama otomatis tetap tampil kalau URL kosong/gagal dimuat
+function labelTerapkanGambar(url, imgEl, wrapEl, kelasAktif) {
+  if (!imgEl || !wrapEl) return;
+  wrapEl.classList.remove(kelasAktif);
+  if (!labelUrlValid(url)) { imgEl.removeAttribute('src'); return; }
+  imgEl.onload  = function () { wrapEl.classList.add(kelasAktif); };
+  imgEl.onerror = function () { wrapEl.classList.remove(kelasAktif); };
+  imgEl.src = String(url).trim();
+}
+
+function labelTerapkanSemua() {
+  var c = labelBaca();
+  labelTerapkanGambar(c.logo, document.getElementById('brand-logo-img'), document.querySelector('#sidebar .sidebar-brand'), 'has-logo');
+  labelTerapkanGambar(c.logo, document.getElementById('lp-logo-img'), document.querySelector('.login-panel .lp-logo'), 'has-logo');
+  labelTerapkanGambar(c.foto, document.getElementById('topbar-foto-img'), document.querySelector('#topbar .admin-info'), 'has-foto');
+}
+
+// Langsung diterapkan saat halaman dibuka (dari cache) — termasuk di layar login
+document.addEventListener('DOMContentLoaded', labelTerapkanSemua);
+
+function labelPreview(key, url) {
+  var box = document.getElementById('lbl-prev-' + key);
+  if (!box) return;
+  var img = box.querySelector('img');
+  box.classList.remove('has-img');
+  if (!url || !img) return;
+  img.onload  = function () { box.classList.add('has-img'); };
+  img.onerror = function () { box.classList.remove('has-img'); };
+  img.src = url;
+}
+
+function labelInput(key) {
+  var el  = document.getElementById('lbl-input-' + key);
+  var btn = document.getElementById('lbl-btn-' + key);
+  var st  = document.getElementById('lbl-status-' + key);
+  var url = String((el || {}).value || '').trim();
+  var ok  = labelUrlValid(url);
+  if (btn) btn.disabled = !ok;
+  if (st) st.textContent = '';
+  labelPreview(key, ok ? url : '');
+}
+
+function bukaModalLabel() {
+  var c = labelBaca();
+  var cl = null;
+  try { cl = JSON.parse(localStorage.getItem('spmbAdminLoginData') || 'null'); } catch (e) {}
+  var nilai = {
+    logo: c.logo || '',
+    foto: c.foto || '',
+    bgAdmin: c.bgAdmin || (cl && cl.bgUrl) || '',
+    bgPendaftar: c.bgPendaftar || ''
+  };
+  ['logo', 'foto', 'bgAdmin', 'bgPendaftar'].forEach(function (k) {
+    var el = document.getElementById('lbl-input-' + k);
+    if (el) el.value = nilai[k];
+    labelInput(k);
+  });
+  var modalEl = document.getElementById('modalLabelGambar');
+  if (modalEl && window.bootstrap) {
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+}
+
+function simpanLabel(key) {
+  var el  = document.getElementById('lbl-input-' + key);
+  var st  = document.getElementById('lbl-status-' + key);
+  var url = String((el || {}).value || '').trim();
+  if (!labelUrlValid(url)) return;
+  var c = labelBaca();
+  c[key] = url;
+  labelTulis(c);
+  if (key === 'logo' || key === 'foto') labelTerapkanSemua();
+  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  PENAMBAHAN FITUR: Lihat Status & Buka Akses Pendaftar (tombol Aksi/mata)
 // ═══════════════════════════════════════════════════════════════
 var _mspKodeAktif = '';
@@ -2864,6 +2986,67 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Nomor HP</div><div class="fw-bold" style="font-size:.88rem" id="mbp-nohp"></div></div>
         <div style="background:#f4f6f8;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Asal Sekolah</div><div class="fw-bold" style="font-size:.88rem" id="mbp-sekolah"></div></div>
         <div style="background:#ffffff;padding:.5rem .9rem"><div class="text-muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.02em">Jalur Pendaftaran</div><div class="fw-bold" style="font-size:.88rem" id="mbp-jalur"></div></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PENAMBAHAN FITUR: MODAL LABEL (URL gambar) — Pengaturan > Label
+     ═══════════════════════════════════════════════ -->
+<div class="modal fade" id="modalLabelGambar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-tags text-primary"></i> Label &amp; Gambar</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body" style="background:#f8fafc">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="lbl-field">
+              <div class="lbl-head"><i class="fa-solid fa-school"></i>URL Logo Sekolah<small>Tampil di sidebar &amp; halaman login</small></div>
+              <div class="lbl-body">
+                <div class="lbl-prev lbl-prev-round" id="lbl-prev-logo"><i class="fa-regular fa-image"></i><img alt=""></div>
+                <input type="text" class="form-control form-control-sm" id="lbl-input-logo" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('logo')">
+              </div>
+              <div class="lbl-foot"><span class="lbl-status" id="lbl-status-logo"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-logo" disabled onclick="simpanLabel('logo')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="lbl-field">
+              <div class="lbl-head"><i class="fa-solid fa-circle-user"></i>URL Foto Pengguna<small>Tampil di samping nama pengguna</small></div>
+              <div class="lbl-body">
+                <div class="lbl-prev lbl-prev-round" id="lbl-prev-foto"><i class="fa-regular fa-image"></i><img alt=""></div>
+                <input type="text" class="form-control form-control-sm" id="lbl-input-foto" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('foto')">
+              </div>
+              <div class="lbl-foot"><span class="lbl-status" id="lbl-status-foto"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-foto" disabled onclick="simpanLabel('foto')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="lbl-field">
+              <div class="lbl-head"><i class="fa-solid fa-image"></i>URL Background Web Admin<small>Latar halaman login admin</small></div>
+              <div class="lbl-body">
+                <div class="lbl-prev" id="lbl-prev-bgAdmin"><i class="fa-regular fa-image"></i><img alt=""></div>
+                <input type="text" class="form-control form-control-sm" id="lbl-input-bgAdmin" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('bgAdmin')">
+              </div>
+              <div class="lbl-foot"><span class="lbl-status" id="lbl-status-bgAdmin"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-bgAdmin" disabled onclick="simpanLabel('bgAdmin')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="lbl-field">
+              <div class="lbl-head"><i class="fa-solid fa-globe"></i>URL Background Web Pendaftar<small>Latar website pendaftar</small></div>
+              <div class="lbl-body">
+                <div class="lbl-prev" id="lbl-prev-bgPendaftar"><i class="fa-regular fa-image"></i><img alt=""></div>
+                <input type="text" class="form-control form-control-sm" id="lbl-input-bgPendaftar" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('bgPendaftar')">
+              </div>
+              <div class="lbl-foot"><span class="lbl-status" id="lbl-status-bgPendaftar"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-bgPendaftar" disabled onclick="simpanLabel('bgPendaftar')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
