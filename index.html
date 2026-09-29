@@ -467,8 +467,6 @@
   .lbl-col { display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; }
   .lbl-akun-label { font-size:.68rem; font-weight:700; color:#8b95a3; text-transform:uppercase; letter-spacing:.03em; }
   .lbl-hint { font-size:.72rem; color:#8b95a3; line-height:1.4; }
-  .lbl-nama-prev { background:var(--sidebar-bg,#1e2a38); color:#fff; border-radius:10px; padding:9px 16px; font-size:.82rem; font-weight:700; line-height:1.25; min-width:170px; max-width:220px; flex-shrink:0; }
-  .lbl-nama-prev span { display:block; overflow-wrap:anywhere; }
   #brand-text { min-width:0; overflow-wrap:anywhere; }
 </style>
 </head>
@@ -2626,6 +2624,7 @@ function prosesLoginAdmin() {
           sessionStorage.setItem('adminLoggedIn', '1');
           if (res.token) sessionStorage.setItem('adminToken', res.token);
           sessionStorage.setItem('adminNama', res.nama_admin || jabatan);
+          sessionStorage.setItem('adminJabatan', jabatan);
           // Tampilkan nama admin di topbar
           document.getElementById('namaAdmin').textContent = res.nama_admin || jabatan;
           // Sembunyikan login screen & tampilkan dashboard
@@ -2955,6 +2954,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (res && res.status === 'SUCCESS') {
           sessionStorage.setItem('adminLoggedIn', '1');
           sessionStorage.setItem('adminNama', res.nama_admin || 'Panitia');
+          sessionStorage.setItem('adminJabatan', res.jabatan || '');
           document.getElementById('namaAdmin').textContent = res.nama_admin || 'Panitia';
           var ls = document.getElementById('login-screen');
           ls.style.display = 'none';
@@ -3053,13 +3053,9 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="row g-3">
           <div class="col-12">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-heading"></i>Nama Aplikasi<small>Tampil di halaman login, sidebar, bagian atas halaman, dan judul tab browser</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-heading"></i>Nama Aplikasi<small>Tampil di login, sidebar &amp; bagian atas halaman</small></div>
               <div class="lbl-body">
-                <div class="lbl-nama-prev" id="lbl-prev-nama"><span>SPMB</span><span>SMPN 1 Bulukumba</span></div>
-                <div class="lbl-col">
-                  <input type="text" class="form-control form-control-sm" id="lbl-input-nama" maxlength="40" placeholder="Contoh: SPMB SMPN 1 Bulukumba" autocomplete="off" spellcheck="false" oninput="labelInputNama()">
-                  <div class="lbl-hint">Kata pertama tampil di baris atas, sisanya di baris bawah. Halaman login menambahkan “Admin” di depan dan “— Panel Panitia” di belakang.</div>
-                </div>
+                <input type="text" class="form-control form-control-sm" id="lbl-input-nama" maxlength="40" placeholder="Contoh: SPMB SMPN 1 Bulukumba" autocomplete="off" spellcheck="false" oninput="labelInputNama()">
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-nama"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-nama" disabled onclick="simpanLabelNama()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
