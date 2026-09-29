@@ -34,7 +34,9 @@
     getUsiaMaksimal: 'adminGetUsiaMaksimal',
     setUsiaMaksimal: 'adminSetUsiaMaksimal',
     getDashboardData: 'adminGetDashboardData',
-    validateAdminSession: 'adminValidateSession'
+    validateAdminSession: 'adminValidateSession',
+    getLabelData: 'adminGetLabelData',
+    setLabelData: 'adminSetLabelData'
   };
   function callApi(action, args) {
     if (!GAS_API_URL || GAS_API_URL.indexOf('REPLACE_WITH') === 0) return Promise.reject(new Error('URL API GAS belum diatur.'));
@@ -2135,6 +2137,28 @@ function labelBaca() {
 function labelTulis(obj) {
   try { localStorage.setItem(LABEL_CACHE_KEY, JSON.stringify(obj)); } catch (e) {}
 }
+function labelMuatServer(callback) {
+  google.script.run
+    .withSuccessHandler(function (data) {
+      if (data) { labelTulis(data); labelTerapkanSemua(); }
+      if (callback) callback(data || labelBaca());
+    })
+    .withFailureHandler(function () {
+      if (callback) callback(labelBaca());
+    })
+    .getLabelData();
+}
+function labelSimpanServer(key, value, akun, callback) {
+  google.script.run
+    .withSuccessHandler(function (data) {
+      if (data) labelTulis(data);
+      if (callback) callback(true, data);
+    })
+    .withFailureHandler(function (err) {
+      if (callback) callback(false, err);
+    })
+    .setLabelData(key, value, akun || '');
+}
 function labelUrlValid(u) {
   return /^https:\/\/\S+$/i.test(String(u || '').trim());
 }
@@ -2191,12 +2215,14 @@ function labelTerapkanSemua() {
   labelTerapkanGambar(c.logo, document.getElementById('brand-logo-img'), document.querySelector('#sidebar .sidebar-brand'), 'has-logo');
   labelTerapkanGambar(c.logo, document.getElementById('lp-logo-img'), document.querySelector('.login-panel .lp-logo'), 'has-logo');
   labelTerapkanGambar(labelFotoAkun(c, labelAkunAktif()), document.getElementById('topbar-foto-img'), document.querySelector('#topbar .admin-info'), 'has-foto');
+  var loginScreen = document.getElementById('login-screen');
+  if (loginScreen && labelUrlValid(c.bgAdmin)) loginScreen.style.backgroundImage = 'url(' + c.bgAdmin + ')';
   labelTerapkanNama();
 }
 
 // Langsung diterapkan saat halaman dibuka (dari cache) — termasuk di layar login
 labelTerapkanNama();
-document.addEventListener('DOMContentLoaded', labelTerapkanSemua);
+document.addEventListener('DOMContentLoaded', function () { labelTerapkanSemua(); labelMuatServer(); });
 
 function labelPreview(key, url) {
   var box = document.getElementById('lbl-prev-' + key);
@@ -2221,28 +2247,27 @@ function labelInput(key) {
 }
 
 function bukaModalLabel() {
-  var c = labelBaca();
-  labelIsiAkunFoto();
-  var inNama = document.getElementById('lbl-input-nama');
-  if (inNama) inNama.value = c.appName || '';
-  labelInputNama();
-  var cl = null;
-  try { cl = JSON.parse(localStorage.getItem('spmbAdminLoginData') || 'null'); } catch (e) {}
-  var nilai = {
-    logo: c.logo || '',
-    foto: labelFotoAkun(c, labelAkunDipilih()),
-    bgAdmin: c.bgAdmin || (cl && cl.bgUrl) || '',
-    bgPendaftar: c.bgPendaftar || ''
-  };
-  ['logo', 'foto', 'bgAdmin', 'bgPendaftar'].forEach(function (k) {
-    var el = document.getElementById('lbl-input-' + k);
-    if (el) el.value = nilai[k];
-    labelInput(k);
+  labelMuatServer(function (c) {
+    labelIsiAkunFoto();
+    var inNama = document.getElementById('lbl-input-nama');
+    if (inNama) inNama.value = c.appName || '';
+    labelInputNama();
+    var nilai = {
+      logo: c.logo || '',
+      foto: labelFotoAkun(c, labelAkunDipilih()),
+      bgAdmin: c.bgAdmin || '',
+      bgPendaftar: c.bgPendaftar || ''
+    };
+    ['logo', 'foto', 'bgAdmin', 'bgPendaftar'].forEach(function (k) {
+      var el = document.getElementById('lbl-input-' + k);
+      if (el) el.value = nilai[k];
+      labelInput(k);
+    });
+    var modalEl = document.getElementById('modalLabelGambar');
+    if (modalEl && window.bootstrap) {
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
   });
-  var modalEl = document.getElementById('modalLabelGambar');
-  if (modalEl && window.bootstrap) {
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
 }
 
 function simpanLabel(key) {
@@ -2259,9 +2284,17 @@ function simpanLabel(key) {
   } else {
     c[key] = url;
   }
+  labelSimpanServer(key, url, key === 'foto' ? labelAkunDipilih() : '', function (ok, data) {
+    if (ok) {
+      if (data) labelTulis(data);
+      if (key === 'logo' || key === 'foto' || key === 'bgAdmin') labelTerapkanSemua();
+      if (st) st.textContent = '✓ Tersimpan';
+    } else {
+      if (st) st.textContent = 'Gagal menyimpan';
+    }
+  });
   labelTulis(c);
-  if (key === 'logo' || key === 'foto') labelTerapkanSemua();
-  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+  if (key === 'logo' || key === 'foto' || key === 'bgAdmin') labelTerapkanSemua();
 }
 
 // ── Nama Aplikasi (input + simpan) ──
@@ -2282,7 +2315,10 @@ function simpanLabelNama() {
   c.appName = nama;
   labelTulis(c);
   labelTerapkanNama();
-  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+  labelSimpanServer('appName', nama, '', function (ok, data) {
+    if (ok && data) labelTulis(data);
+    if (st) st.textContent = ok ? '✓ Tersimpan' : 'Gagal menyimpan';
+  });
 }
 
 // ── Pemilih Akun untuk Foto Pengguna ──
@@ -2719,6 +2755,7 @@ function prosesLoginAdmin() {
           if (res.token) sessionStorage.setItem('adminToken', res.token);
           sessionStorage.setItem('adminNama', res.nama_admin || jabatan);
           sessionStorage.setItem('adminJabatan', jabatan);
+          if (typeof labelMuatServer === 'function') labelMuatServer();
           // Tampilkan nama admin di topbar
           document.getElementById('namaAdmin').textContent = res.nama_admin || jabatan;
           // Sembunyikan login screen & tampilkan dashboard
@@ -3049,6 +3086,7 @@ document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.setItem('adminLoggedIn', '1');
           sessionStorage.setItem('adminNama', res.nama_admin || 'Panitia');
           sessionStorage.setItem('adminJabatan', res.jabatan || '');
+          if (typeof labelMuatServer === 'function') labelMuatServer();
           document.getElementById('namaAdmin').textContent = res.nama_admin || 'Panitia';
           var ls = document.getElementById('login-screen');
           ls.style.display = 'none';
