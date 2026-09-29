@@ -468,6 +468,12 @@
   .lbl-akun-label { font-size:.68rem; font-weight:700; color:#8b95a3; text-transform:uppercase; letter-spacing:.03em; }
   .lbl-hint { font-size:.72rem; color:#8b95a3; line-height:1.4; }
   #brand-text { min-width:0; overflow-wrap:anywhere; }
+  .bk-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .bk-card { border:1px solid #e8ecf0; border-radius:12px; padding:22px 14px 16px; background:#fff; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
+  .bk-ico { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#3b82f6; font-size:1.15rem; }
+  .bk-card h6 { margin:0; font-size:.88rem; font-weight:700; color:#1e2a38; }
+  .bk-card small { color:#8b95a3; font-size:.72rem; line-height:1.4; min-height:2.8em; }
+  .bk-card .btn { width:100%; margin-top:auto; }
 </style>
 </head>
 <body class="needs-login">
@@ -600,6 +606,13 @@
           </a>
         </li>
       </ul>
+    </li>
+
+    <!-- 6. Backup Data (pop-up) -->
+    <li class="nav-item-spmb">
+      <a class="nav-link-spmb" id="nav-backup-data" onclick="bukaModalBackup()">
+        <i class="fa-solid fa-database nav-icon"></i> Backup Data
+      </a>
     </li>
   </ul>
 
@@ -2209,11 +2222,15 @@ function labelInput(key) {
 
 function bukaModalLabel() {
   var c = labelBaca();
+  labelIsiAkunFoto();
+  var inNama = document.getElementById('lbl-input-nama');
+  if (inNama) inNama.value = c.appName || '';
+  labelInputNama();
   var cl = null;
   try { cl = JSON.parse(localStorage.getItem('spmbAdminLoginData') || 'null'); } catch (e) {}
   var nilai = {
     logo: c.logo || '',
-    foto: c.foto || '',
+    foto: labelFotoAkun(c, labelAkunDipilih()),
     bgAdmin: c.bgAdmin || (cl && cl.bgUrl) || '',
     bgPendaftar: c.bgPendaftar || ''
   };
@@ -2234,10 +2251,87 @@ function simpanLabel(key) {
   var url = String((el || {}).value || '').trim();
   if (!labelUrlValid(url)) return;
   var c = labelBaca();
-  c[key] = url;
+  if (key === 'foto') {
+    var akun = labelAkunDipilih();
+    if (!akun) { if (st) st.textContent = 'Pilih akun terlebih dahulu'; return; }
+    c.fotoMap = c.fotoMap || {};
+    c.fotoMap[akun] = url;
+  } else {
+    c[key] = url;
+  }
   labelTulis(c);
   if (key === 'logo' || key === 'foto') labelTerapkanSemua();
   if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+}
+
+// ── Nama Aplikasi (input + simpan) ──
+function labelInputNama() {
+  var el  = document.getElementById('lbl-input-nama');
+  var btn = document.getElementById('lbl-btn-nama');
+  var st  = document.getElementById('lbl-status-nama');
+  var nama = String((el || {}).value || '').trim();
+  if (btn) btn.disabled = !nama;
+  if (st) st.textContent = '';
+}
+function simpanLabelNama() {
+  var el  = document.getElementById('lbl-input-nama');
+  var st  = document.getElementById('lbl-status-nama');
+  var nama = String((el || {}).value || '').trim().replace(/\s+/g, ' ');
+  if (!nama) return;
+  var c = labelBaca();
+  c.appName = nama;
+  labelTulis(c);
+  labelTerapkanNama();
+  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+}
+
+// ── Pemilih Akun untuk Foto Pengguna ──
+function labelAkunDipilih() {
+  var sel = document.getElementById('lbl-akun-foto');
+  return (sel && sel.value) ? sel.value : labelAkunAktif();
+}
+function labelIsiAkunFoto() {
+  var sel = document.getElementById('lbl-akun-foto');
+  if (!sel) return;
+  var sebelumnya = sel.value || labelAkunAktif();
+  var daftar = [];
+  var src = document.getElementById('lp-jabatan');
+  if (src) {
+    Array.prototype.forEach.call(src.options, function (o) {
+      var v = String(o.value || '').trim();
+      if (v && daftar.indexOf(v) === -1) daftar.push(v);
+    });
+  }
+  var aktif = labelAkunAktif();
+  if (aktif && daftar.indexOf(aktif) === -1) daftar.unshift(aktif);
+  sel.innerHTML = '';
+  if (!daftar.length) {
+    var kosong = document.createElement('option');
+    kosong.value = '';
+    kosong.textContent = 'Belum ada akun';
+    sel.appendChild(kosong);
+    return;
+  }
+  daftar.forEach(function (v) {
+    var op = document.createElement('option');
+    op.value = v;
+    op.textContent = v;
+    sel.appendChild(op);
+  });
+  sel.value = daftar.indexOf(sebelumnya) !== -1 ? sebelumnya : daftar[0];
+}
+function labelGantiAkunFoto() {
+  var el = document.getElementById('lbl-input-foto');
+  if (el) el.value = labelFotoAkun(labelBaca(), labelAkunDipilih());
+  labelInput('foto');
+}
+
+// ── Menu Backup Data (pop-up) ──
+function bukaModalBackup() {
+  var modalEl = document.getElementById('modalBackupData');
+  if (modalEl && window.bootstrap) {
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3103,6 +3197,39 @@ document.addEventListener('DOMContentLoaded', function() {
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-bgPendaftar"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-bgPendaftar" disabled onclick="simpanLabel('bgPendaftar')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PENAMBAHAN FITUR: MODAL BACKUP DATA (tampilan saja) — menu Backup Data
+     ═══════════════════════════════════════════════ -->
+<div class="modal fade" id="modalBackupData" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-database text-primary"></i> Backup Data</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body" style="background:#f8fafc">
+        <div class="bk-grid">
+          <div class="bk-card">
+            <div class="bk-ico"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+            <h6>Backup Data</h6>
+            <small>Simpan salinan seluruh data pendaftaran</small>
+            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-backup"><i class="fa-solid fa-download me-1"></i>Backup</button>
+          </div>
+          <div class="bk-card">
+            <div class="bk-ico"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <h6>Restore</h6>
+            <small>Pulihkan data dari file backup sebelumnya</small>
+            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-restore"><i class="fa-solid fa-upload me-1"></i>Restore</button>
           </div>
         </div>
       </div>
