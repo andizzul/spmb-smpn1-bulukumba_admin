@@ -35,7 +35,8 @@
     setUsiaMaksimal: 'adminSetUsiaMaksimal',
     getDashboardData: 'adminGetDashboardData',
     validateAdminSession: 'adminValidateSession',
-    setPengumumanBatch: 'adminSetPengumumanBatch'
+    setPengumumanBatch: 'adminSetPengumumanBatch',
+    getVerifikasiData: 'adminGetVerifikasiData'
   };
   function callApi(action, args) {
     if (!GAS_API_URL || GAS_API_URL.indexOf('REPLACE_WITH') === 0) return Promise.reject(new Error('URL API GAS belum diatur.'));
@@ -862,6 +863,17 @@
          ───────────────────────────────────────── -->
     <div id="page-verifikasi" class="page-content d-none">
       <div class="page-title"><i class="fa-solid fa-circle-check"></i> Verifikasi Pendaftar</div>
+      <div id="verifikasi-kirim-overlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(15,23,42,.38);align-items:center;justify-content:center;padding:20px">
+        <div style="width:min(520px,100%);background:#fff;border-radius:14px;padding:24px;box-shadow:0 18px 50px rgba(0,0,0,.18);text-align:center">
+          <div id="verifikasi-kirim-icon" style="font-size:2rem;color:#2563EB;margin-bottom:8px"><i class="fa-solid fa-paper-plane"></i></div>
+          <div id="verifikasi-kirim-title" style="font-weight:700;font-size:1.05rem;color:#1e2a38;margin-bottom:6px">Mengirim data...</div>
+          <div id="verifikasi-kirim-desc" style="font-size:.82rem;color:#6B7280;margin-bottom:14px">Mohon tunggu, sistem sedang menyimpan keputusan ke Spreadsheet.</div>
+          <div style="height:14px;background:#E5E7EB;border-radius:999px;overflow:hidden">
+            <div id="verifikasi-kirim-progress" style="height:100%;width:18%;background:#2563EB;border-radius:999px;transition:width .55s ease"></div>
+          </div>
+          <button type="button" id="verifikasi-kirim-tutup" class="btn btn-primary btn-sm" style="display:none;margin-top:16px;border-radius:8px" onclick="verifikasiTutupKirimOverlay()">Tutup</button>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-header" style="flex-wrap:wrap;gap:10px">
           <div>
@@ -1744,25 +1756,6 @@ function verifikasiGetUsia(r) {
   return usia === null ? '-' : String(usia);
 }
 
-function verifikasiLoadDataSetelahAcuan(jalur) {
-  try {
-    google.script.run
-      .withSuccessHandler(function(data) {
-        _verifikasiTglAcuan = data && data.tglAcuan ? data.tglAcuan : null;
-        window._globalTglAcuan = _verifikasiTglAcuan;
-        verifikasiLoadPendaftar(jalur);
-      })
-      .withFailureHandler(function() {
-        _verifikasiTglAcuan = window._globalTglAcuan || null;
-        verifikasiLoadPendaftar(jalur);
-      })
-      .getUsiaMaksimal();
-  } catch(e) {
-    _verifikasiTglAcuan = window._globalTglAcuan || null;
-    verifikasiLoadPendaftar(jalur);
-  }
-}
-
 function loadVerifikasiJalur(jalur) {
   _verifikasiJalurAktif = jalur ? jalur.charAt(0).toUpperCase() + jalur.substring(1).toLowerCase() : '';
   var label = document.getElementById('verifikasi-jalur-label');
@@ -1779,24 +1772,28 @@ function loadVerifikasiJalur(jalur) {
   verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
 }
 
-function verifikasiLoadPendaftar(jalur) {
+function verifikasiLoadDataSetelahAcuan(jalur) {
   try {
     google.script.run
-      .withSuccessHandler(function(data) {
-        _verifikasiData = (data || []).filter(function(r) {
+      .withSuccessHandler(function(result) {
+        _verifikasiTglAcuan = result && result.tglAcuan ? result.tglAcuan : null;
+        window._globalTglAcuan = _verifikasiTglAcuan;
+        _verifikasiData = (result && result.data ? result.data : []).filter(function(r) {
           return String(r.jalur || '').trim().toLowerCase() === String(jalur || '').trim().toLowerCase();
         });
         _verifikasiData.forEach(function(r) {
-          if (!_verifikasiStatus[r.kode]) _verifikasiStatus[r.kode] = 'Belum Ditentukan';
+          _verifikasiStatus[r.kode] = r.keputusan || 'Belum Ditentukan';
         });
         verifikasiFilter();
       })
       .withFailureHandler(function(e) {
+        _verifikasiTglAcuan = window._globalTglAcuan || null;
         var tbody = document.getElementById('verifikasi-tbody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Gagal memuat data: ' + (e && e.message ? e.message : e) + '</td></tr>';
       })
-      .getDataPendaftar();
+      .getVerifikasiData(jalur);
   } catch(e) {
+    _verifikasiTglAcuan = window._globalTglAcuan || null;
     var tbody = document.getElementById('verifikasi-tbody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Sistem sedang memuat data...</td></tr>';
   }
@@ -1934,6 +1931,80 @@ function verifikasiUbahJumlahPerHalaman() {
   verifikasiRender();
 }
 
+var _verifikasiKirimTimer = null;
+
+function verifikasiTampilKirimOverlay(mode, detail) {
+  var overlay = document.getElementById('verifikasi-kirim-overlay');
+  var title = document.getElementById('verifikasi-kirim-title');
+  var desc = document.getElementById('verifikasi-kirim-desc');
+  var bar = document.getElementById('verifikasi-kirim-progress');
+  var icon = document.getElementById('verifikasi-kirim-icon');
+  var tutup = document.getElementById('verifikasi-kirim-tutup');
+  if (!overlay || !title || !desc || !bar || !icon || !tutup) return;
+  overlay.style.display = 'flex';
+  tutup.style.display = mode === 'success' || mode === 'error' ? 'inline-block' : 'none';
+  var tombolKirim = document.getElementById('verifikasi-btn-kirim');
+  if (tombolKirim) tombolKirim.disabled = mode === 'sending' || mode === 'checking';
+  if (_verifikasiKirimTimer) clearInterval(_verifikasiKirimTimer);
+  if (mode === 'sending' || mode === 'checking') {
+    icon.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+    icon.style.color = '#2563EB';
+    title.textContent = mode === 'checking' ? 'Memverifikasi hasil pengiriman...' : 'Mengirim data...';
+    desc.textContent = detail || 'Mohon tunggu, sistem sedang menyimpan keputusan ke Spreadsheet.';
+    bar.style.background = '#2563EB';
+    bar.style.width = '18%';
+    _verifikasiKirimTimer = setInterval(function() {
+      var current = parseFloat(bar.style.width) || 18;
+      bar.style.width = current >= 88 ? '18%' : (current + 12) + '%';
+    }, 550);
+  } else if (mode === 'success') {
+    icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+    icon.style.color = '#16A34A';
+    title.textContent = 'Pengiriman berhasil';
+    desc.textContent = detail || 'Data sudah tersimpan di Spreadsheet.';
+    bar.style.background = '#2563EB';
+    bar.style.width = '100%';
+  } else {
+    icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+    icon.style.color = '#DC2626';
+    title.textContent = 'Pengiriman belum dapat diverifikasi';
+    desc.textContent = detail || 'Silakan periksa kembali data pada sheet Pengumuman sebelum mengirim ulang.';
+    bar.style.background = '#DC2626';
+    bar.style.width = '100%';
+  }
+}
+
+function verifikasiTutupKirimOverlay() {
+  var overlay = document.getElementById('verifikasi-kirim-overlay');
+  if (_verifikasiKirimTimer) { clearInterval(_verifikasiKirimTimer); _verifikasiKirimTimer = null; }
+  if (overlay) overlay.style.display = 'none';
+}
+
+function verifikasiCekHasilPengiriman(batch, percobaan) {
+  verifikasiTampilKirimOverlay('checking', 'Koneksi terputus atau terlambat. Sistem sedang memeriksa apakah data sudah masuk ke sheet Pengumuman.');
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var data = result && result.data ? result.data : [];
+      var byKode = {};
+      data.forEach(function(r) { byKode[String(r.kode || '').trim()] = String(r.keputusan || '').trim(); });
+      var semuaCocok = batch.every(function(item) { return byKode[String(item.kode || '').trim()] === String(item.status || '').trim(); });
+      if (semuaCocok) {
+        _verifikasiLastBatch = batch;
+        verifikasiTampilKirimOverlay('success', batch.length + ' data pendaftar sudah terverifikasi tersimpan di sheet Pengumuman.');
+        verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
+      } else if (percobaan < 2) {
+        setTimeout(function() { verifikasiCekHasilPengiriman(batch, percobaan + 1); }, 900);
+      } else {
+        verifikasiTampilKirimOverlay('error', 'Hasil pengiriman belum dapat dipastikan. Periksa sheet Pengumuman sebelum mencoba lagi.');
+      }
+    })
+    .withFailureHandler(function() {
+      if (percobaan < 2) setTimeout(function() { verifikasiCekHasilPengiriman(batch, percobaan + 1); }, 900);
+      else verifikasiTampilKirimOverlay('error', 'Koneksi tidak dapat digunakan untuk memverifikasi hasil pengiriman.');
+    })
+    .getVerifikasiData(_verifikasiJalurAktif);
+}
+
 function verifikasiKonfirmasiKirim() {
   var batch = _verifikasiData.filter(function(r) { return verifikasiGetStatus(r.kode) !== 'Belum Ditentukan'; }).map(function(r) {
     return { kode: r.kode, nama: r.nama, nisn: r.nisn, jalur: r.jalur, status: verifikasiGetStatus(r.kode) };
@@ -1948,17 +2019,22 @@ function verifikasiKonfirmasiKirim() {
   var pesan = 'Anda akan mengirim ' + batch.length + ' data verifikasi untuk jalur ' + _verifikasiJalurAktif + '.\n\nDiterima: ' + diterima + '\nCadangan: ' + cadangan + '\nTidak Lulus: ' + tidak + '\n\nData "Belum Ditentukan" tidak ikut dikirim.\n\nLanjutkan?';
   if (!confirm(pesan)) return;
 
+  var tombol = document.getElementById('verifikasi-btn-kirim');
+  if (tombol) tombol.disabled = true;
+  verifikasiTampilKirimOverlay('sending');
   google.script.run
     .withSuccessHandler(function(result) {
       if (!result || result.status !== 'SUCCESS') {
-        alert('Gagal menyimpan hasil verifikasi.');
+        verifikasiCekHasilPengiriman(batch, 0);
         return;
       }
       _verifikasiLastBatch = batch;
-      alert('Hasil verifikasi berhasil dikirim (' + batch.length + ' data).');
+      verifikasiTampilKirimOverlay('success', batch.length + ' data pendaftar berhasil disimpan dan diverifikasi di sheet Pengumuman.');
+      verifikasiLoadDataSetelahAcuan(_verifikasiJalurAktif);
+      if (tombol) tombol.disabled = false;
     })
-    .withFailureHandler(function(e) {
-      alert('Gagal menyimpan hasil verifikasi: ' + e);
+    .withFailureHandler(function() {
+      verifikasiCekHasilPengiriman(batch, 0);
     })
     .setPengumumanBatch(batch);
 }
