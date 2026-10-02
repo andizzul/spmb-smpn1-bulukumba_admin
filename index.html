@@ -1211,6 +1211,15 @@
               <div id="status-pgtr-pendaftaran" class="mb-3"><span class="status-off">Memuat...</span></div>
               <button id="btn-buka-pendaftaran" class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
               <button id="btn-tutup-pendaftaran" class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
+              <div id="alasan-pendaftaran-wrap" style="display:none;margin-top:16px">
+                <label for="alasan-pendaftaran" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pendaftaran</label>
+                <textarea id="alasan-pendaftaran" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pendaftaran..." oninput="perbaruiPreviewPenutupan('pendaftaran')"></textarea>
+                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
+                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
+                  <div id="preview-alasan-pendaftaran" style="margin-top:4px;color:#4b5563">-</div>
+                </div>
+                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pendaftaran')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1222,6 +1231,15 @@
               <div id="status-pgtr-pengumuman" class="mb-3"><span class="status-off">Memuat...</span></div>
               <button id="btn-buka-pengumuman" class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
               <button id="btn-tutup-pengumuman" class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
+              <div id="alasan-pengumuman-wrap" style="display:none;margin-top:16px">
+                <label for="alasan-pengumuman" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pengumuman</label>
+                <textarea id="alasan-pengumuman" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pengumuman..." oninput="perbaruiPreviewPenutupan('pengumuman')"></textarea>
+                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
+                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
+                  <div id="preview-alasan-pengumuman" style="margin-top:4px;color:#4b5563">-</div>
+                </div>
+                <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pengumuman')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1379,6 +1397,8 @@ function bukaHalaman(pageId) {
   }
   // Load kuota saat halaman pengaturan-kuota dibuka
   if(pageId === 'pengaturan-kuota') { loadKuota(); }
+  // Load status dan alasan penutupan saat halaman Buka/Tutup Akses dibuka
+  if(pageId === 'pengaturan-pendaftaran') { muatAksesPengaturan(); }
   // Load usia maksimal saat halaman pengaturan-usia dibuka
   if(pageId === 'pengaturan-usia') { loadUsiaMaksimal(); }
   // Auto-refresh dashboard setiap kali dibuka
@@ -1424,7 +1444,11 @@ function handleJumlahPerJalur(data) {
 }
 
 function handleStatusPendaftaran(status) {
-  status = (status && typeof status === 'object' && status.status !== undefined) ? status.status : status;
+  var pesan = '';
+  if(status && typeof status === 'object') {
+    pesan = String(status.pesan || '');
+    status = status.status;
+  }
   var on = (String(status).toLowerCase() === 'buka');
   var badgeDash  = document.getElementById('status-pendaftaran-badge');
   var badgePgtr  = document.getElementById('status-pgtr-pendaftaran');
@@ -1443,9 +1467,19 @@ function handleStatusPendaftaran(status) {
     btnTutup.classList.toggle('btn-danger', on);
     btnTutup.classList.toggle('btn-secondary', !on);
   }
+  var wrap = document.getElementById('alasan-pendaftaran-wrap');
+  var field = document.getElementById('alasan-pendaftaran');
+  if(field && pesan && !field.value) field.value = pesan;
+  if(wrap) wrap.style.display = on ? 'none' : 'block';
+  perbaruiPreviewPenutupan('pendaftaran');
 }
 
 function handleStatusPengumuman(status) {
+  var pesan = '';
+  if(status && typeof status === 'object') {
+    pesan = String(status.pesan || '');
+    status = status.status;
+  }
   var on = (String(status).toLowerCase() === 'buka');
   var el = document.getElementById('status-pgtr-pengumuman');
   var elDash = document.getElementById('status-pengumuman-badge');
@@ -1464,6 +1498,63 @@ function handleStatusPengumuman(status) {
     btnTutupP.classList.toggle('btn-danger', on);
     btnTutupP.classList.toggle('btn-secondary', !on);
   }
+  var wrap = document.getElementById('alasan-pengumuman-wrap');
+  var field = document.getElementById('alasan-pengumuman');
+  if(field && pesan && !field.value) field.value = pesan;
+  if(wrap) wrap.style.display = on ? 'none' : 'block';
+  perbaruiPreviewPenutupan('pengumuman');
+}
+
+function perbaruiPreviewPenutupan(jenis) {
+  var field = document.getElementById('alasan-' + jenis);
+  var preview = document.getElementById('preview-alasan-' + jenis);
+  if(preview) preview.textContent = field && field.value.trim() ? field.value.trim() : '-';
+}
+
+function muatAksesPengaturan() {
+  try {
+    google.script.run
+      .withSuccessHandler(function(data) { handleStatusPendaftaran(data); })
+      .withFailureHandler(function(e) { console.error('Gagal memuat status pendaftaran:', e); })
+      .getStatusPendaftaran();
+    google.script.run
+      .withSuccessHandler(function(data) { handleStatusPengumuman(data); })
+      .withFailureHandler(function(e) { console.error('Gagal memuat status pengumuman:', e); })
+      .getStatusPengumuman();
+  } catch(e) {}
+}
+
+function simpanAlasanPenutupan(jenis) {
+  var field = document.getElementById('alasan-' + jenis);
+  var button = document.getElementById('btn-simpan-alasan-' + jenis);
+  var alasan = field ? field.value.trim() : '';
+  if(!alasan) {
+    alert('Silakan isi alasan penutupan terlebih dahulu.');
+    if(field) field.focus();
+    return;
+  }
+  if(button) {
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
+  }
+  var selesai = function() {
+    if(button) {
+      button.disabled = false;
+      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+    }
+  };
+  try {
+    google.script.run
+      .withSuccessHandler(function() {
+        selesai();
+        alert('Alasan penutupan berhasil disimpan.');
+        muatAksesPengaturan();
+      })
+      .withFailureHandler(function(e) {
+        selesai();
+        alert('Gagal menyimpan alasan: ' + e);
+      })[jenis === 'pendaftaran' ? 'setStatusPendaftaran' : 'setStatusPengumuman']('Tutup', alasan);
+  } catch(e) { selesai(); }
 }
 
 function handlePendaftarTerbaru(terbaru) {
@@ -1490,22 +1581,24 @@ function handlePendaftarTerbaru(terbaru) {
 function ubahStatusPendaftaran(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pendaftaran?')) return;
   handleStatusPendaftaran(status);
+  var alasan = document.getElementById('alasan-pendaftaran');
   try {
     google.script.run
-      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); }, 2000); })
+      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); muatAksesPengaturan(); }, 2000); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
-      .setStatusPendaftaran(status);
+      .setStatusPendaftaran(status, status === 'Tutup' && alasan ? alasan.value.trim() : '');
   } catch(e) { handleStatusPendaftaran(status); }
 }
 
 function ubahStatusPengumuman(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pengumuman?')) return;
   handleStatusPengumuman(status);
+  var alasan = document.getElementById('alasan-pengumuman');
   try {
     google.script.run
-      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); }, 2000); })
+      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); muatAksesPengaturan(); }, 2000); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
-      .setStatusPengumuman(status);
+      .setStatusPengumuman(status, status === 'Tutup' && alasan ? alasan.value.trim() : '');
   } catch(e) { handleStatusPengumuman(status); }
 }
 
