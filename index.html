@@ -1212,13 +1212,12 @@
               <button id="btn-buka-pendaftaran" class="btn btn-success btn-sm me-2" onclick="ubahStatusPendaftaran('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pendaftaran</button>
               <button id="btn-tutup-pendaftaran" class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
               <div id="alasan-pendaftaran-wrap" style="display:none;margin-top:16px">
-                <label for="alasan-pendaftaran" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pendaftaran</label>
-                <textarea id="alasan-pendaftaran" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pendaftaran..." oninput="perbaruiPreviewPenutupan('pendaftaran')"></textarea>
-                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
-                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
-                  <div id="preview-alasan-pendaftaran" style="margin-top:4px;color:#4b5563">-</div>
+                <label for="alasan-pendaftaran" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan</label>
+                <textarea id="alasan-pendaftaran" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pendaftaran..." readonly></textarea>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                  <button id="btn-ubah-alasan-pendaftaran" class="btn btn-outline-primary btn-sm" onclick="ubahModeAlasanPenutupan('pendaftaran')">Ubah</button>
+                  <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="display:none" onclick="simpanAlasanPenutupan('pendaftaran')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button>
                 </div>
-                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pendaftaran')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
               </div>
             </div>
           </div>
@@ -1232,13 +1231,12 @@
               <button id="btn-buka-pengumuman" class="btn btn-success btn-sm me-2" onclick="ubahStatusPengumuman('Buka')"><i class="fa-solid fa-lock-open me-1"></i>Buka Pengumuman</button>
               <button id="btn-tutup-pengumuman" class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
               <div id="alasan-pengumuman-wrap" style="display:none;margin-top:16px">
-                <label for="alasan-pengumuman" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pengumuman</label>
-                <textarea id="alasan-pengumuman" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pengumuman..." oninput="perbaruiPreviewPenutupan('pengumuman')"></textarea>
-                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
-                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
-                  <div id="preview-alasan-pengumuman" style="margin-top:4px;color:#4b5563">-</div>
+                <label for="alasan-pengumuman" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan</label>
+                <textarea id="alasan-pengumuman" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pengumuman..." readonly></textarea>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                  <button id="btn-ubah-alasan-pengumuman" class="btn btn-outline-primary btn-sm" onclick="ubahModeAlasanPenutupan('pengumuman')">Ubah</button>
+                  <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="display:none" onclick="simpanAlasanPenutupan('pengumuman')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button>
                 </div>
-                <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pengumuman')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
               </div>
             </div>
           </div>
@@ -1445,8 +1443,9 @@ function handleJumlahPerJalur(data) {
 
 function handleStatusPendaftaran(status) {
   var pesan = '';
-  if(status && typeof status === 'object') {
-    pesan = String(status.pesan || '');
+  var adaPesan = !!(status && typeof status === 'object');
+  if(adaPesan) {
+    pesan = status.pesan !== undefined && status.pesan !== null ? String(status.pesan) : '';
     status = status.status;
   }
   var on = (String(status).toLowerCase() === 'buka');
@@ -1469,15 +1468,15 @@ function handleStatusPendaftaran(status) {
   }
   var wrap = document.getElementById('alasan-pendaftaran-wrap');
   var field = document.getElementById('alasan-pendaftaran');
-  if(field && pesan && !field.value) field.value = pesan;
+  if(field && field.readOnly && adaPesan) field.value = pesan;
   if(wrap) wrap.style.display = on ? 'none' : 'block';
-  perbaruiPreviewPenutupan('pendaftaran');
 }
 
 function handleStatusPengumuman(status) {
   var pesan = '';
-  if(status && typeof status === 'object') {
-    pesan = String(status.pesan || '');
+  var adaPesan = !!(status && typeof status === 'object');
+  if(adaPesan) {
+    pesan = status.pesan !== undefined && status.pesan !== null ? String(status.pesan) : '';
     status = status.status;
   }
   var on = (String(status).toLowerCase() === 'buka');
@@ -1500,15 +1499,19 @@ function handleStatusPengumuman(status) {
   }
   var wrap = document.getElementById('alasan-pengumuman-wrap');
   var field = document.getElementById('alasan-pengumuman');
-  if(field && pesan && !field.value) field.value = pesan;
+  if(field && field.readOnly && adaPesan) field.value = pesan;
   if(wrap) wrap.style.display = on ? 'none' : 'block';
-  perbaruiPreviewPenutupan('pengumuman');
 }
 
-function perbaruiPreviewPenutupan(jenis) {
+function ubahModeAlasanPenutupan(jenis) {
   var field = document.getElementById('alasan-' + jenis);
-  var preview = document.getElementById('preview-alasan-' + jenis);
-  if(preview) preview.textContent = field && field.value.trim() ? field.value.trim() : '-';
+  var btnUbah = document.getElementById('btn-ubah-alasan-' + jenis);
+  var btnSimpan = document.getElementById('btn-simpan-alasan-' + jenis);
+  if(!field) return;
+  field.readOnly = false;
+  if(btnSimpan) btnSimpan.style.display = 'inline-block';
+  if(btnUbah) btnUbah.style.display = 'inline-block';
+  field.focus();
 }
 
 function muatAksesPengaturan() {
@@ -1540,15 +1543,19 @@ function simpanAlasanPenutupan(jenis) {
   var selesai = function() {
     if(button) {
       button.disabled = false;
-      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan';
     }
   };
   try {
     google.script.run
       .withSuccessHandler(function() {
+        if(field) field.readOnly = true;
+        if(button) button.style.display = 'none';
+        var btnUbah = document.getElementById('btn-ubah-alasan-' + jenis);
+        if(btnUbah) btnUbah.style.display = 'inline-block';
         selesai();
-        alert('Alasan penutupan berhasil disimpan.');
         muatAksesPengaturan();
+        alert('Alasan penutupan berhasil disimpan.');
       })
       .withFailureHandler(function(e) {
         selesai();
