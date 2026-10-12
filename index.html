@@ -1218,7 +1218,7 @@
                   <strong style="color:#374151">Preview untuk pendaftar:</strong>
                   <div id="preview-alasan-pendaftaran" style="margin-top:4px;color:#4b5563">-</div>
                 </div>
-                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pendaftaran')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPendaftaran()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
               </div>
             </div>
           </div>
@@ -1238,7 +1238,7 @@
                   <strong style="color:#374151">Preview untuk pendaftar:</strong>
                   <div id="preview-alasan-pengumuman" style="margin-top:4px;color:#4b5563">-</div>
                 </div>
-                <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPenutupan('pengumuman')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+                <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPengumuman()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
               </div>
             </div>
           </div>
@@ -1524,9 +1524,9 @@ function muatAksesPengaturan() {
   } catch(e) {}
 }
 
-function simpanAlasanPenutupan(jenis) {
-  var field = document.getElementById('alasan-' + jenis);
-  var button = document.getElementById('btn-simpan-alasan-' + jenis);
+function simpanAlasanPendaftaran() {
+  var field = document.getElementById('alasan-pendaftaran');
+  var button = document.getElementById('btn-simpan-alasan-pendaftaran');
   var alasan = field ? field.value.trim() : '';
   if(!alasan) {
     alert('Silakan isi alasan penutupan terlebih dahulu.');
@@ -1537,24 +1537,69 @@ function simpanAlasanPenutupan(jenis) {
     button.disabled = true;
     button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
   }
-  var selesai = function() {
+  try {
+    google.script.run
+      .withSuccessHandler(function() {
+        if(button) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+        }
+        alert('Alasan penutupan berhasil disimpan.');
+        handleStatusPendaftaran({status: 'Tutup', pesan: alasan});
+      })
+      .withFailureHandler(function(e) {
+        if(button) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+        }
+        alert('Gagal menyimpan alasan: ' + e);
+      })
+      .setStatusPendaftaran('Tutup', alasan);
+  } catch(e) {
     if(button) {
       button.disabled = false;
       button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
     }
-  };
+  }
+}
+
+function simpanAlasanPengumuman() {
+  var field = document.getElementById('alasan-pengumuman');
+  var button = document.getElementById('btn-simpan-alasan-pengumuman');
+  var alasan = field ? field.value.trim() : '';
+  if(!alasan) {
+    alert('Silakan isi alasan penutupan terlebih dahulu.');
+    if(field) field.focus();
+    return;
+  }
+  if(button) {
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
+  }
   try {
     google.script.run
       .withSuccessHandler(function() {
-        selesai();
+        if(button) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+        }
         alert('Alasan penutupan berhasil disimpan.');
-        muatAksesPengaturan();
+        handleStatusPengumuman({status: 'Tutup', pesan: alasan});
       })
       .withFailureHandler(function(e) {
-        selesai();
+        if(button) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+        }
         alert('Gagal menyimpan alasan: ' + e);
-      })[jenis === 'pendaftaran' ? 'setStatusPendaftaran' : 'setStatusPengumuman']('Tutup', alasan);
-  } catch(e) { selesai(); }
+      })
+      .setStatusPengumuman('Tutup', alasan);
+  } catch(e) {
+    if(button) {
+      button.disabled = false;
+      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+    }
+  }
 }
 
 function handlePendaftarTerbaru(terbaru) {
@@ -1581,24 +1626,24 @@ function handlePendaftarTerbaru(terbaru) {
 function ubahStatusPendaftaran(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pendaftaran?')) return;
   handleStatusPendaftaran(status);
-  var alasan = document.getElementById('alasan-pendaftaran');
+  if(status === 'Tutup') return;
   try {
     google.script.run
-      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); muatAksesPengaturan(); }, 2000); })
+      .withSuccessHandler(function() { handleStatusPendaftaran('Buka'); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
-      .setStatusPendaftaran(status, status === 'Tutup' && alasan ? alasan.value.trim() : '');
+      .setStatusPendaftaran('Buka');
   } catch(e) { handleStatusPendaftaran(status); }
 }
 
 function ubahStatusPengumuman(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pengumuman?')) return;
   handleStatusPengumuman(status);
-  var alasan = document.getElementById('alasan-pengumuman');
+  if(status === 'Tutup') return;
   try {
     google.script.run
-      .withSuccessHandler(function() { setTimeout(function() { muatSemuaData(); muatAksesPengaturan(); }, 2000); })
+      .withSuccessHandler(function() { handleStatusPengumuman('Buka'); })
       .withFailureHandler(function(e) { alert('Gagal: ' + e); })
-      .setStatusPengumuman(status, status === 'Tutup' && alasan ? alasan.value.trim() : '');
+      .setStatusPengumuman('Buka');
   } catch(e) { handleStatusPengumuman(status); }
 }
 
