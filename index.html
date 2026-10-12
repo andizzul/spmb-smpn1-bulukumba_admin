@@ -55,32 +55,32 @@
     });
   }
   function makeRunner() {
-    var success = null, failure = null;
-    var proxy; // dideklarasikan lebih dulu supaya bisa dirujuk oleh runner di bawah
-    var runner = {
-      withSuccessHandler: function (fn) { success = fn; return proxy; },
-      withFailureHandler: function (fn) { failure = fn; return proxy; }
-    };
-    proxy = new Proxy(runner, {
-      get: function (target, prop) {
-        if (prop in target) return target[prop];
-        return function () {
-          var args = Array.prototype.slice.call(arguments);
-          var action = ADMIN_MAP[prop];
-          if (!action) {
-            var err = new Error('Admin API action tidak dikenal: ' + prop);
-            if (failure) failure(err);
-            return;
-          }
-          callApi(action, args).then(function (data) {
-            if (success) success(data);
-          }).catch(function (err) {
-            if (failure) failure(err);
-          });
-        };
-      }
-    });
-    return proxy;
+    function createRunner(success, failure) {
+      var runner = {
+        withSuccessHandler: function (fn) { return createRunner(fn, failure); },
+        withFailureHandler: function (fn) { return createRunner(success, fn); }
+      };
+      return new Proxy(runner, {
+        get: function (target, prop) {
+          if (prop in target) return target[prop];
+          return function () {
+            var args = Array.prototype.slice.call(arguments);
+            var action = ADMIN_MAP[prop];
+            if (!action) {
+              var err = new Error('Admin API action tidak dikenal: ' + prop);
+              if (failure) failure(err);
+              return;
+            }
+            callApi(action, args).then(function (data) {
+              if (success) success(data);
+            }).catch(function (err) {
+              if (failure) failure(err);
+            });
+          };
+        }
+      });
+    }
+    return createRunner(null, null);
   }
   window.google = { script: { run: makeRunner() } };
 })();
