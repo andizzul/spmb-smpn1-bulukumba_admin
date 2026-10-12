@@ -1213,12 +1213,8 @@
               <button id="btn-tutup-pendaftaran" class="btn btn-danger btn-sm" onclick="ubahStatusPendaftaran('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pendaftaran</button>
               <div id="alasan-pendaftaran-wrap" style="display:none;margin-top:16px">
                 <label for="alasan-pendaftaran" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pendaftaran</label>
-                <textarea id="alasan-pendaftaran" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pendaftaran..." oninput="perbaruiPreviewPenutupan('pendaftaran')"></textarea>
-                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
-                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
-                  <div id="preview-alasan-pendaftaran" style="margin-top:4px;color:#4b5563">-</div>
-                </div>
-                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPendaftaran()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+                <textarea id="alasan-pendaftaran" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pendaftaran..." disabled></textarea>
+                <button id="btn-simpan-alasan-pendaftaran" class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="ubahModeAlasanPendaftaran()"><i class="fa-solid fa-pen-to-square me-1"></i>Edit Alasan</button>
               </div>
             </div>
           </div>
@@ -1233,12 +1229,8 @@
               <button id="btn-tutup-pengumuman" class="btn btn-danger btn-sm" onclick="ubahStatusPengumuman('Tutup')"><i class="fa-solid fa-lock me-1"></i>Tutup Pengumuman</button>
               <div id="alasan-pengumuman-wrap" style="display:none;margin-top:16px">
                 <label for="alasan-pengumuman" style="font-size:.82rem;font-weight:700;color:#555;display:block;margin-bottom:6px">Alasan Penutupan Pengumuman</label>
-                <textarea id="alasan-pengumuman" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pengumuman..." oninput="perbaruiPreviewPenutupan('pengumuman')"></textarea>
-                <div style="margin-top:8px;padding:9px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:.78rem;color:#6b7280">
-                  <strong style="color:#374151">Preview untuk pendaftar:</strong>
-                  <div id="preview-alasan-pengumuman" style="margin-top:4px;color:#4b5563">-</div>
-                </div>
-                <button id="btn-simpan-alasan-pengumuman" class="btn btn-primary btn-sm" style="margin-top:10px" onclick="simpanAlasanPengumuman()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan</button>
+                <textarea id="alasan-pengumuman" class="form-control" rows="3" placeholder="Tuliskan alasan penutupan pengumuman..." disabled></textarea>
+                <button id="btn-simpan-alasan-pengumuman" class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="ubahModeAlasanPengumuman()"><i class="fa-solid fa-pen-to-square me-1"></i>Edit Alasan</button>
               </div>
             </div>
           </div>
@@ -1443,6 +1435,44 @@ function handleJumlahPerJalur(data) {
   document.getElementById('count-total').textContent = total + ' orang';
 }
 
+function setModeAlasanPendaftaran(editable) {
+  var field = document.getElementById('alasan-pendaftaran');
+  var button = document.getElementById('btn-simpan-alasan-pendaftaran');
+  if(field) field.disabled = !editable;
+  if(button) button.innerHTML = editable
+    ? '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim'
+    : '<i class="fa-solid fa-pen-to-square me-1"></i>Edit Alasan';
+}
+
+function setModeAlasanPengumuman(editable) {
+  var field = document.getElementById('alasan-pengumuman');
+  var button = document.getElementById('btn-simpan-alasan-pengumuman');
+  if(field) field.disabled = !editable;
+  if(button) button.innerHTML = editable
+    ? '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim'
+    : '<i class="fa-solid fa-pen-to-square me-1"></i>Edit Alasan';
+}
+
+function ubahModeAlasanPendaftaran() {
+  var field = document.getElementById('alasan-pendaftaran');
+  if(field && field.disabled) {
+    setModeAlasanPendaftaran(true);
+    field.focus();
+  } else {
+    simpanAlasanPendaftaran();
+  }
+}
+
+function ubahModeAlasanPengumuman() {
+  var field = document.getElementById('alasan-pengumuman');
+  if(field && field.disabled) {
+    setModeAlasanPengumuman(true);
+    field.focus();
+  } else {
+    simpanAlasanPengumuman();
+  }
+}
+
 function handleStatusPendaftaran(status) {
   var pesan = '';
   if(status && typeof status === 'object') {
@@ -1471,7 +1501,7 @@ function handleStatusPendaftaran(status) {
   var field = document.getElementById('alasan-pendaftaran');
   if(field) field.value = pesan;
   if(wrap) wrap.style.display = on ? 'none' : 'block';
-  perbaruiPreviewPenutupan('pendaftaran');
+  setModeAlasanPendaftaran(false);
 }
 
 function handleStatusPengumuman(status) {
@@ -1502,13 +1532,7 @@ function handleStatusPengumuman(status) {
   var field = document.getElementById('alasan-pengumuman');
   if(field) field.value = pesan;
   if(wrap) wrap.style.display = on ? 'none' : 'block';
-  perbaruiPreviewPenutupan('pengumuman');
-}
-
-function perbaruiPreviewPenutupan(jenis) {
-  var field = document.getElementById('alasan-' + jenis);
-  var preview = document.getElementById('preview-alasan-' + jenis);
-  if(preview) preview.textContent = field && field.value.trim() ? field.value.trim() : '-';
+  setModeAlasanPengumuman(false);
 }
 
 function muatAksesPengaturan() {
@@ -1542,7 +1566,7 @@ function simpanAlasanPendaftaran() {
       .withSuccessHandler(function() {
         if(button) {
           button.disabled = false;
-          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
         alert('Alasan penutupan berhasil disimpan.');
         handleStatusPendaftaran({status: 'Tutup', pesan: alasan});
@@ -1550,7 +1574,7 @@ function simpanAlasanPendaftaran() {
       .withFailureHandler(function(e) {
         if(button) {
           button.disabled = false;
-          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
         alert('Gagal menyimpan alasan: ' + e);
       })
@@ -1558,7 +1582,7 @@ function simpanAlasanPendaftaran() {
   } catch(e) {
     if(button) {
       button.disabled = false;
-      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
     }
   }
 }
@@ -1581,7 +1605,7 @@ function simpanAlasanPengumuman() {
       .withSuccessHandler(function() {
         if(button) {
           button.disabled = false;
-          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
         alert('Alasan penutupan berhasil disimpan.');
         handleStatusPengumuman({status: 'Tutup', pesan: alasan});
@@ -1589,7 +1613,7 @@ function simpanAlasanPengumuman() {
       .withFailureHandler(function(e) {
         if(button) {
           button.disabled = false;
-          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+          button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
         alert('Gagal menyimpan alasan: ' + e);
       })
@@ -1597,7 +1621,7 @@ function simpanAlasanPengumuman() {
   } catch(e) {
     if(button) {
       button.disabled = false;
-      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Alasan';
+      button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
     }
   }
 }
@@ -1626,7 +1650,12 @@ function handlePendaftarTerbaru(terbaru) {
 function ubahStatusPendaftaran(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pendaftaran?')) return;
   handleStatusPendaftaran(status);
-  if(status === 'Tutup') return;
+  if(status === 'Tutup') {
+    setModeAlasanPendaftaran(true);
+    var field = document.getElementById('alasan-pendaftaran');
+    if(field) field.focus();
+    return;
+  }
   try {
     google.script.run
       .withSuccessHandler(function() { handleStatusPendaftaran('Buka'); })
@@ -1638,7 +1667,12 @@ function ubahStatusPendaftaran(status) {
 function ubahStatusPengumuman(status) {
   if(!confirm('Yakin ingin ' + (status==='Buka'?'MEMBUKA':'MENUTUP') + ' pengumuman?')) return;
   handleStatusPengumuman(status);
-  if(status === 'Tutup') return;
+  if(status === 'Tutup') {
+    setModeAlasanPengumuman(true);
+    var field = document.getElementById('alasan-pengumuman');
+    if(field) field.focus();
+    return;
+  }
   try {
     google.script.run
       .withSuccessHandler(function() { handleStatusPengumuman('Buka'); })
