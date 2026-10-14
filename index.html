@@ -1588,7 +1588,7 @@ function simpanAlasanPendaftaran() {
           button.disabled = false;
           button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
-        alert('Gagal menyimpan alasan: ' + e);
+        alert('Penyimpanan gagal. Silakan coba lagi.');
       })
       .setStatusPendaftaran('Tutup', alasan);
   } catch(e) {
@@ -1627,7 +1627,7 @@ function simpanAlasanPengumuman() {
           button.disabled = false;
           button.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan/Kirim';
         }
-        alert('Gagal menyimpan alasan: ' + e);
+        alert('Penyimpanan gagal. Silakan coba lagi.');
       })
       .setStatusPengumuman('Tutup', alasan);
   } catch(e) {
@@ -1671,7 +1671,7 @@ function ubahStatusPendaftaran(status) {
   try {
     google.script.run
       .withSuccessHandler(function() { handleStatusPendaftaran('Buka'); })
-      .withFailureHandler(function(e) { alert('Gagal: ' + e); })
+      .withFailureHandler(function(e) { alert('Proses gagal. Silakan coba lagi.'); })
       .setStatusPendaftaran('Buka');
   } catch(e) { handleStatusPendaftaran(status); }
 }
@@ -1688,7 +1688,7 @@ function ubahStatusPengumuman(status) {
   try {
     google.script.run
       .withSuccessHandler(function() { handleStatusPengumuman('Buka'); })
-      .withFailureHandler(function(e) { alert('Gagal: ' + e); })
+      .withFailureHandler(function(e) { alert('Proses gagal. Silakan coba lagi.'); })
       .setStatusPengumuman('Buka');
   } catch(e) { handleStatusPengumuman(status); }
 }
@@ -1879,10 +1879,10 @@ function simpanKuota() {
   };
   try {
     google.script.run
-      .withSuccessHandler(function() { alert('Data kuota berhasil disimpan!'); hitungKuotaOtomatis(); })
-      .withFailureHandler(function(e) { alert('Gagal menyimpan: ' + e); })
+      .withSuccessHandler(function() { alert('Perubahan berhasil disimpan.'); hitungKuotaOtomatis(); })
+      .withFailureHandler(function(e) { alert('Penyimpanan gagal. Silakan coba lagi.'); })
       .updateKuotaJalur(data);
-  } catch(e) { alert('Data tersimpan (mode preview).'); }
+  } catch(e) { alert('Perubahan berhasil diterapkan.'); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1980,7 +1980,7 @@ function verifikasiLoadDataSetelahAcuan(jalur) {
       .withFailureHandler(function(e) {
         _verifikasiTglAcuan = window._globalTglAcuan || null;
         var tbody = document.getElementById('verifikasi-tbody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Gagal memuat data: ' + (e && e.message ? e.message : e) + '</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Data tidak dapat dimuat. Silakan coba lagi.</td></tr>';
       })
       .getVerifikasiData(jalur);
   } catch(e) {
@@ -2294,7 +2294,7 @@ function loadDataPendaftarAsli(retry) {
       })
       .withFailureHandler(function(e) {
         if (!retry) { setTimeout(function() { loadDataPendaftarAsli(true); }, 800); return; }
-        if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="text-center text-danger py-4">Gagal memuat data: ' + e + '</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="13" class="text-center text-danger py-4">Data tidak dapat dimuat. Silakan coba lagi.</td></tr>';
       })
       .getDataPendaftar();
   } catch(e) {
@@ -2507,6 +2507,19 @@ function labelTerapkanSemua() {
   labelTerapkanNama();
 }
 
+function labelMuatSetelahLogin() {
+  labelTerapkanSemua();
+  try {
+    google.script.run
+      .withSuccessHandler(function (data) {
+        labelTulis(data || {});
+        labelTerapkanSemua();
+      })
+      .withFailureHandler(function () {})
+      .getLabel();
+  } catch (e) {}
+}
+
 // Langsung diterapkan dari cache agar tampilan awal cepat; modal tetap melakukan refresh dari spreadsheet.
 labelTerapkanNama();
 document.addEventListener('DOMContentLoaded', labelTerapkanSemua);
@@ -2565,11 +2578,11 @@ function bukaModalLabel() {
     google.script.run
       .withSuccessHandler(function (data) { labelTampilkanModal(data || {}); })
       .withFailureHandler(function (err) {
-        if (!cached || !Object.keys(cached).length) alert('Gagal memuat konfigurasi Label: ' + (err && err.message ? err.message : err));
+        if (!cached || !Object.keys(cached).length) alert('Pengaturan tidak dapat dimuat. Silakan coba lagi.');
       })
       .getLabel();
   } catch (e) {
-    if (!cached || !Object.keys(cached).length) alert('Gagal memuat konfigurasi Label.');
+    if (!cached || !Object.keys(cached).length) alert('Pengaturan tidak dapat dimuat. Silakan coba lagi.');
   }
 }
 
@@ -2586,13 +2599,13 @@ function simpanLabel(key) {
       .withSuccessHandler(function (data) {
         labelTulis(data || {});
         labelTerapkanSemua();
-        if (st) st.textContent = '✓ Tersimpan di spreadsheet';
+        if (st) st.textContent = '✓ Berhasil disimpan';
         labelGantiAkunFoto();
       })
-      .withFailureHandler(function (err) { if (st) st.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : err); })
+      .withFailureHandler(function (err) { if (st) st.textContent = 'Penyimpanan gagal. Silakan coba lagi.'; })
       .setLabel({ key: key, url: url, akun: akun });
   } catch (e) {
-    if (st) st.textContent = 'Gagal menyimpan.';
+    if (st) st.textContent = 'Penyimpanan gagal. Silakan coba lagi.';
   }
 }
 
@@ -2616,12 +2629,12 @@ function simpanLabelNama() {
       .withSuccessHandler(function (data) {
         labelTulis(data || {});
         labelTerapkanNama();
-        if (st) st.textContent = '✓ Tersimpan di spreadsheet';
+        if (st) st.textContent = '✓ Berhasil disimpan';
       })
-      .withFailureHandler(function (err) { if (st) st.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : err); })
+      .withFailureHandler(function (err) { if (st) st.textContent = 'Penyimpanan gagal. Silakan coba lagi.'; })
       .setLabel({ key: 'appName', url: nama, akun: '' });
   } catch (e) {
-    if (st) st.textContent = 'Gagal menyimpan.';
+    if (st) st.textContent = 'Penyimpanan gagal. Silakan coba lagi.';
   }
 }
 
@@ -2823,17 +2836,17 @@ function bukaAksesPendaftarAdmin() {
           alert('Akses berhasil dibuka. Pendaftar dapat mengedit kembali biodatanya.');
           loadDataPendaftarAsli();
         } else {
-          alert('Gagal membuka akses: ' + (res && res.msg ? res.msg : 'Data tidak ditemukan'));
+          alert('Perubahan tidak dapat diterapkan. Silakan coba lagi.');
           if (aksiEl) aksiEl.innerHTML = '<button class="btn btn-warning btn-sm w-100" onclick="bukaAksesPendaftarAdmin()"><i class="fa-solid fa-lock-open"></i> Buka Akses</button>';
         }
       })
       .withFailureHandler(function(e) {
-        alert('Gagal membuka akses: ' + e);
+        alert('Perubahan tidak dapat diterapkan. Silakan coba lagi.');
         if (aksiEl) aksiEl.innerHTML = '<button class="btn btn-warning btn-sm w-100" onclick="bukaAksesPendaftarAdmin()"><i class="fa-solid fa-lock-open"></i> Buka Akses</button>';
       })
       .bukaAksesPendaftar(_mspKodeAktif);
   } catch(e) {
-    alert('Tidak dapat terhubung ke server.');
+    alert('Layanan sedang tidak tersedia. Silakan coba lagi.');
   }
 }
 
@@ -3053,6 +3066,7 @@ function prosesLoginAdmin() {
           if (res.token) sessionStorage.setItem('adminToken', res.token);
           sessionStorage.setItem('adminNama', res.nama_admin || jabatan);
           sessionStorage.setItem('adminJabatan', jabatan);
+          labelMuatSetelahLogin();
           // Tampilkan nama admin di topbar
           document.getElementById('namaAdmin').textContent = res.nama_admin || jabatan;
           // Sembunyikan login screen & tampilkan dashboard
@@ -3072,7 +3086,7 @@ function prosesLoginAdmin() {
         console.error('loginAdmin gagal:', err);                 // <-- sementara, untuk diagnosis
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i>&nbsp; MASUK';
-        errBox.textContent = 'Koneksi gagal: ' + (err && err.message ? err.message : err);
+        errBox.textContent = 'Koneksi tidak tersedia. Silakan coba lagi.';
         errBox.classList.add('show');
       })
       .loginAdmin(jabatan, password);
@@ -3080,7 +3094,7 @@ function prosesLoginAdmin() {
     console.error('loginAdmin exception:', e);                     // <-- sementara, untuk diagnosis
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i>&nbsp; MASUK';
-    errBox.textContent = 'Tidak dapat terhubung ke server: ' + (e && e.message ? e.message : e);
+    errBox.textContent = 'Layanan sedang tidak tersedia. Silakan coba lagi.';
     errBox.classList.add('show');
   }
 }
@@ -3146,12 +3160,12 @@ function exportExcel(jalurFilter) {
       })
       .withFailureHandler(function(e) {
         if(loadingEl) loadingEl.style.display = 'none';
-        alert('Gagal mengambil data: ' + e);
+        alert('Data tidak dapat dimuat. Silakan coba lagi.');
       })
       .getDataPendaftar(true);
   } catch(e) {
     if(loadingEl) loadingEl.style.display = 'none';
-    alert('Tidak dapat terhubung ke server. Pastikan Anda mengakses melalui Google Apps Script.');
+    alert('Layanan sedang tidak tersedia. Silakan coba lagi.');
   }
 }
 
@@ -3359,10 +3373,10 @@ function simpanUsiaMaksimal() {
   try {
     google.script.run
       .withSuccessHandler(function() { alert('Pengaturan usia maksimal berhasil disimpan!'); })
-      .withFailureHandler(function(e) { alert('Gagal menyimpan: ' + e); })
+      .withFailureHandler(function(e) { alert('Penyimpanan gagal. Silakan coba lagi.'); })
       .setUsiaMaksimal(usia, tgl);
   } catch(e) {
-    alert('Tidak dapat terhubung ke server.');
+    alert('Layanan sedang tidak tersedia. Silakan coba lagi.');
   }
 }
 
@@ -3383,6 +3397,7 @@ document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.setItem('adminLoggedIn', '1');
           sessionStorage.setItem('adminNama', res.nama_admin || 'Panitia');
           sessionStorage.setItem('adminJabatan', res.jabatan || '');
+          labelMuatSetelahLogin();
           document.getElementById('namaAdmin').textContent = res.nama_admin || 'Panitia';
           var ls = document.getElementById('login-screen');
           ls.style.display = 'none';
