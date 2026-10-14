@@ -41,7 +41,7 @@
     setLabel: 'adminSetLabel'
   };
   function callApi(action, args) {
-    if (!GAS_API_URL || GAS_API_URL.indexOf('REPLACE_WITH') === 0) return Promise.reject(new Error('URL API GAS belum diatur.'));
+    if (!GAS_API_URL || GAS_API_URL.indexOf('REPLACE_WITH') === 0) return Promise.reject(new Error('Layanan belum siap digunakan.'));
     var token = sessionStorage.getItem('adminToken') || '';
     return fetch(GAS_API_URL, {
       method: 'POST',
@@ -50,8 +50,8 @@
     }).then(function (r) {
       return r.text().then(function (text) {
         var json;
-        try { json = JSON.parse(text); } catch (_) { throw new Error('Respons API tidak valid.'); }
-        if (!r.ok || json.error) throw new Error(json.error || 'Request gagal.');
+        try { json = JSON.parse(text); } catch (_) { throw new Error('Data belum dapat diproses.'); }
+        if (!r.ok || json.error) throw new Error(json.error || 'Permintaan tidak dapat diproses.');
         return json.data;
       });
     });
@@ -69,7 +69,7 @@
             var args = Array.prototype.slice.call(arguments);
             var action = ADMIN_MAP[prop];
             if (!action) {
-              var err = new Error('Admin API action tidak dikenal: ' + prop);
+              var err = new Error('Fitur belum tersedia.');
               if (failure) failure(err);
               return;
             }
@@ -493,7 +493,7 @@
 
     <label for="lp-jabatan">Pilih Jabatan</label>
     <select id="lp-jabatan">
-      <option value="">-- Memuat data... --</option>
+      <option value="">-- Memuat pilihan... --</option>
     </select>
 
     <label for="lp-password">Password</label>
@@ -546,7 +546,7 @@
     <!-- 4. Export Data -->
     <li class="nav-item-spmb">
       <a class="nav-link-spmb" id="nav-export" onclick="bukaHalaman('export')">
-        <i class="fa-solid fa-download nav-icon"></i> Export Data
+        <i class="fa-solid fa-download nav-icon"></i> Unduh Data
       </a>
     </li>
 
@@ -615,7 +615,7 @@
     <!-- 6. Backup Data (pop-up) -->
     <li class="nav-item-spmb">
       <a class="nav-link-spmb" id="nav-backup-data" onclick="bukaModalBackup()">
-        <i class="fa-solid fa-database nav-icon"></i> Backup Data
+        <i class="fa-solid fa-database nav-icon"></i> Cadangkan Data
       </a>
     </li>
   </ul>
@@ -1059,8 +1059,8 @@
         <div class="col-12 col-lg-7">
           <div class="panel h-100">
             <div class="panel-header">
-              <h6><i class="fa-solid fa-table"></i> Tabel Rekapitulasi Detail</h6>
-              <small class="text-muted">Visualisasi Real-Time Pendaftar</small>
+              <h6><i class="fa-solid fa-table"></i> Rincian Rekapitulasi</h6>
+              <small class="text-muted">Data Pendaftar Terkini</small>
             </div>
             <div class="panel-body p-0">
               <table class="table table-hover table-bordered mb-0" style="font-size:.84rem">
@@ -1128,8 +1128,8 @@
 
       <div class="export-header">
         <div>
-          <h1 class="export-title">Export Data Pendaftar</h1>
-          <div class="export-subtitle">Pilih kategori data yang ingin Anda unduh.</div>
+          <h1 class="export-title">Unduh Data Pendaftar</h1>
+          <div class="export-subtitle">Pilih data yang ingin Anda unduh.</div>
         </div>
         <button class="export-all-btn" onclick="exportExcel('semua')">
           <i class="fa-solid fa-download"></i> Unduh Semua Data
@@ -1186,13 +1186,13 @@
         </div>
       </div>
 
-      <div class="export-note">Catatan: File diunduh secara real-time dalam format .xlsx. Pastikan koneksi internet stabil.</div>
+      <div class="export-note">Catatan: Data akan diunduh dalam format Excel. Pastikan koneksi internet stabil.</div>
 
       <!-- Loading Overlay Export -->
       <div id="export-loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
         <div style="background:#fff;border-radius:16px;padding:32px 40px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.25);">
           <i class="fa-solid fa-spinner fa-spin" style="font-size:2.2rem;color:#1976D2;margin-bottom:14px;display:block;"></i>
-          <div style="font-weight:700;font-size:1rem;color:#1e2a38;margin-bottom:4px;">Sedang mengambil data...</div>
+          <div style="font-weight:700;font-size:1rem;color:#1e2a38;margin-bottom:4px;">Menyiapkan data...</div>
           <div style="font-size:.82rem;color:#888;">Mohon tunggu sebentar</div>
         </div>
       </div>
@@ -1250,7 +1250,7 @@
           <h6><i class="fa-solid fa-percent"></i> Pengaturan Persentase Kuota Jalur SPMB</h6>
         </div>
         <div class="panel-body">
-          <small class="text-muted d-block mb-3">Total harus 100%. Data disimpan ke sheet Pengaturan.</small>
+          <small class="text-muted d-block mb-3">Jumlah seluruh persentase harus 100%.</small>
           <div class="row g-3">
             <div class="col-12 mb-1">
               <label class="form-label fw-semibold">Total Kuota</label>
@@ -1281,7 +1281,7 @@
           <p class="mt-3 mb-3">Total: <span id="total-kuota" class="fw-bold">0</span>%
             <span id="total-kuota-warning" class="text-danger ms-2 d-none"><i class="fa-solid fa-triangle-exclamation"></i> Harus tepat 100%</span>
           </p>
-          <button class="btn btn-primary" onclick="simpanKuota()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Persentase</button>
+          <button class="btn btn-primary" onclick="simpanKuota()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan Pengaturan</button>
         </div>
       </div>
     </div>
@@ -1296,7 +1296,7 @@
           <h6><i class="fa-solid fa-user-clock"></i> Batas Usia Maksimal Pendaftar</h6>
         </div>
         <div class="panel-body">
-          <small class="text-muted d-block mb-3">Data disimpan ke sheet <strong>Pengaturan</strong> (B9 = usia maks, B10 = tanggal acuan).</small>
+          <small class="text-muted d-block mb-3">Atur batas usia pendaftar dan tanggal perhitungannya.</small>
 
           <div class="mb-3">
             <label class="form-label fw-semibold">Usia Maksimal Pendaftar (Tahun)</label>
@@ -1316,7 +1316,7 @@
           </div>
 
           <button class="btn btn-primary" onclick="simpanUsiaMaksimal()">
-            <i class="fa-solid fa-floppy-disk me-1"></i>Simpan Pengaturan Usia
+            <i class="fa-solid fa-floppy-disk me-1"></i>Simpan Batas Usia
           </button>
         </div>
       </div>
@@ -1730,7 +1730,7 @@ function handleDashboardData(data) {
     if (listErr) {
       listErr.innerHTML = '<div style="text-align:center;padding:32px 0;color:#c0392b;font-size:.85rem">'
         + '<i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>'
-        + 'Error server: ' + data.__error + '</div>';
+        + 'Data belum dapat dimuat. Silakan coba lagi.</div>';
     }
     var usiaLoadingErr = document.getElementById('usiaDist-loading');
     if (usiaLoadingErr) usiaLoadingErr.style.display = 'none';
@@ -1869,7 +1869,7 @@ function simpanKuota() {
   var p = parseFloat(document.getElementById('kuota-prestasi').value) || 0;
   var a = parseFloat(document.getElementById('kuota-afirmasi').value) || 0;
   var m = parseFloat(document.getElementById('kuota-mutasi').value)   || 0;
-  if((d + p + a + m) !== 100) { alert('Total persentase harus tepat 100%. Saat ini: ' + (d+p+a+m) + '%'); return; }
+  if((d + p + a + m) !== 100) { alert('Jumlah persentase harus tepat 100%. Saat ini: ' + (d+p+a+m) + '%'); return; }
   var data = {
     total:    document.getElementById('total-kuota-input').value,
     domisili: document.getElementById('kuota-domisili').value,
@@ -2398,7 +2398,7 @@ function renderTabelPendaftar() {
 
     return '<tr>' +
       '<td class="text-center">' + realIdx + '</td>' +
-      '<td class="text-center"><button class="btn btn-outline-primary btn-sm" style="padding:1px 7px;font-size:.75rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Biodata"><i class="fa-solid fa-id-card"></i></button></td>' +
+      '<td class="text-center"><button class="btn btn-outline-primary btn-sm" style="padding:1px 7px;font-size:.75rem" onclick="lihatBiodataPendaftar(' + (startIdx + idx) + ')" title="Lihat Data Diri"><i class="fa-solid fa-id-card"></i></button></td>' +
       '<td><strong>' + r.nama + '</strong></td>' +
       '<td class="text-center">' + r.lp + '</td>' +
       '<td>' + r.nisn + '</td>' +
@@ -3111,7 +3111,7 @@ function exportExcel(jalurFilter) {
       .withSuccessHandler(function(allData) {
         if(loadingEl) loadingEl.style.display = 'none';
         if(!allData || allData.length === 0) {
-          alert('Tidak ada data yang tersedia untuk diexport.');
+          alert('Tidak ada data yang tersedia untuk diunduh.');
           return;
         }
 
@@ -3372,7 +3372,7 @@ function simpanUsiaMaksimal() {
   }
   try {
     google.script.run
-      .withSuccessHandler(function() { alert('Pengaturan usia maksimal berhasil disimpan!'); })
+      .withSuccessHandler(function() { alert('Batas usia berhasil disimpan!'); })
       .withFailureHandler(function(e) { alert('Penyimpanan gagal. Silakan coba lagi.'); })
       .setUsiaMaksimal(usia, tgl);
   } catch(e) {
@@ -3505,23 +3505,23 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-school"></i>URL Logo Sekolah<small>Tampil di sidebar &amp; halaman login</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-school"></i>Logo Sekolah<small>Tampil di sidebar &amp; halaman login</small></div>
               <div class="lbl-body">
                 <div class="lbl-prev lbl-prev-round" id="lbl-prev-logo"><i class="fa-regular fa-image"></i><img alt=""></div>
-                <input type="text" class="form-control form-control-sm" id="lbl-input-logo" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('logo')">
+                <input type="text" class="form-control form-control-sm" id="lbl-input-logo" placeholder="Masukkan alamat gambar" autocomplete="off" spellcheck="false" oninput="labelInput('logo')">
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-logo"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-logo" disabled onclick="simpanLabel('logo')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
           </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-circle-user"></i>URL Foto Pengguna<small>Setiap akun punya foto sendiri (tampil di samping nama)</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-circle-user"></i>Foto Pengguna<small>Setiap akun punya foto sendiri (tampil di samping nama)</small></div>
               <div class="lbl-body">
                 <div class="lbl-prev lbl-prev-round" id="lbl-prev-foto"><i class="fa-regular fa-image"></i><img alt=""></div>
                 <div class="lbl-col">
                   <div class="lbl-akun-label">Pemilik foto</div>
                   <select class="form-select form-select-sm" id="lbl-akun-foto" aria-label="Pemilik foto" onchange="labelGantiAkunFoto()"></select>
-                  <input type="text" class="form-control form-control-sm" id="lbl-input-foto" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('foto')">
+                  <input type="text" class="form-control form-control-sm" id="lbl-input-foto" placeholder="Masukkan alamat gambar" autocomplete="off" spellcheck="false" oninput="labelInput('foto')">
                 </div>
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-foto"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-foto" disabled onclick="simpanLabel('foto')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
@@ -3529,20 +3529,20 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-image"></i>URL Background Web Admin<small>Latar halaman login admin</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-image"></i>Latar Halaman Admin<small>Latar halaman login admin</small></div>
               <div class="lbl-body">
                 <div class="lbl-prev" id="lbl-prev-bgAdmin"><i class="fa-regular fa-image"></i><img alt=""></div>
-                <input type="text" class="form-control form-control-sm" id="lbl-input-bgAdmin" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('bgAdmin')">
+                <input type="text" class="form-control form-control-sm" id="lbl-input-bgAdmin" placeholder="Masukkan alamat gambar" autocomplete="off" spellcheck="false" oninput="labelInput('bgAdmin')">
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-bgAdmin"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-bgAdmin" disabled onclick="simpanLabel('bgAdmin')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
           </div>
           <div class="col-12 col-md-6">
             <div class="lbl-field">
-              <div class="lbl-head"><i class="fa-solid fa-globe"></i>URL Background Web Pendaftar<small>Latar website pendaftar</small></div>
+              <div class="lbl-head"><i class="fa-solid fa-globe"></i>Latar Halaman Pendaftar<small>Latar website pendaftar</small></div>
               <div class="lbl-body">
                 <div class="lbl-prev" id="lbl-prev-bgPendaftar"><i class="fa-regular fa-image"></i><img alt=""></div>
-                <input type="text" class="form-control form-control-sm" id="lbl-input-bgPendaftar" placeholder="https://i.ibb.co/..." autocomplete="off" spellcheck="false" oninput="labelInput('bgPendaftar')">
+                <input type="text" class="form-control form-control-sm" id="lbl-input-bgPendaftar" placeholder="Masukkan alamat gambar" autocomplete="off" spellcheck="false" oninput="labelInput('bgPendaftar')">
               </div>
               <div class="lbl-foot"><span class="lbl-status" id="lbl-status-bgPendaftar"></span><button type="button" class="btn btn-primary btn-sm" id="lbl-btn-bgPendaftar" disabled onclick="simpanLabel('bgPendaftar')"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button></div>
             </div>
@@ -3563,22 +3563,22 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
     <div class="modal-content">
       <div class="modal-header">
-        <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-database text-primary"></i> Backup Data</h6>
+        <h6 class="modal-title fw-bold mb-0"><i class="fa-solid fa-database text-primary"></i> Cadangkan Data</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
       <div class="modal-body" style="background:#f8fafc">
         <div class="bk-grid">
           <div class="bk-card">
             <div class="bk-ico"><i class="fa-solid fa-cloud-arrow-down"></i></div>
-            <h6>Backup Data</h6>
+            <h6>Cadangkan Data</h6>
             <small>Simpan salinan seluruh data pendaftaran</small>
-            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-backup"><i class="fa-solid fa-download me-1"></i>Backup</button>
+            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-backup"><i class="fa-solid fa-download me-1"></i>Cadangkan</button>
           </div>
           <div class="bk-card">
             <div class="bk-ico"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            <h6>Restore</h6>
-            <small>Pulihkan data dari file backup sebelumnya</small>
-            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-restore"><i class="fa-solid fa-upload me-1"></i>Restore</button>
+            <h6>Pulihkan Data</h6>
+            <small>Gunakan salinan data sebelumnya</small>
+            <button type="button" class="btn btn-primary btn-sm" id="bk-btn-restore"><i class="fa-solid fa-upload me-1"></i>Pulihkan</button>
           </div>
         </div>
       </div>
