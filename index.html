@@ -36,7 +36,9 @@
     getDashboardData: 'adminGetDashboardData',
     validateAdminSession: 'adminValidateSession',
     setPengumumanBatch: 'adminSetPengumumanBatch',
-    getVerifikasiData: 'adminGetVerifikasiData'
+    getVerifikasiData: 'adminGetVerifikasiData',
+    getLabel: 'adminGetLabel',
+    setLabel: 'adminSetLabel'
   };
   function callApi(action, args) {
     if (!GAS_API_URL || GAS_API_URL.indexOf('REPLACE_WITH') === 0) return Promise.reject(new Error('URL API GAS belum diatur.'));
@@ -2433,9 +2435,8 @@ function changePage(dir) {
 
 // ═══════════════════════════════════════════════════════════════
 //  PENAMBAHAN FITUR: LABEL / GAMBAR DINAMIS (logo sekolah, foto pengguna)
-//  CATATAN: untuk sementara URL hanya disimpan di browser ini (localStorage,
-//  kunci 'spmbAdminLabelLocal'), belum tersambung ke spreadsheet.
-//  Logo & foto langsung diterapkan + di-cache; kedua background baru disimpan.
+//  Sumber utama konfigurasi adalah spreadsheet; localStorage hanya cache.
+//  Pemetaan: Pengaturan!B11, Data_Sekolah!B2:B4, dan Akun!D berdasarkan kolom A.
 // ═══════════════════════════════════════════════════════════════
 var LABEL_CACHE_KEY = 'spmbAdminLabelLocal';
 
@@ -2459,9 +2460,9 @@ function labelTerapkanGambar(url, imgEl, wrapEl, kelasAktif) {
   imgEl.src = String(url).trim();
 }
 
-// Akun yang sedang login (jabatan) — dipakai sebagai kunci foto per akun
+// Akun yang sedang login — dipakai sebagai kunci foto pada kolom A sheet Akun
 function labelAkunAktif() {
-  try { return sessionStorage.getItem('adminJabatan') || ''; } catch (e) { return ''; }
+  try { return sessionStorage.getItem('adminNama') || sessionStorage.getItem('adminJabatan') || ''; } catch (e) { return ''; }
 }
 function labelFotoAkun(c, akun) {
   var m = (c && c.fotoMap) || {};
@@ -2501,10 +2502,12 @@ function labelTerapkanSemua() {
   labelTerapkanGambar(c.logo, document.getElementById('brand-logo-img'), document.querySelector('#sidebar .sidebar-brand'), 'has-logo');
   labelTerapkanGambar(c.logo, document.getElementById('lp-logo-img'), document.querySelector('.login-panel .lp-logo'), 'has-logo');
   labelTerapkanGambar(labelFotoAkun(c, labelAkunAktif()), document.getElementById('topbar-foto-img'), document.querySelector('#topbar .admin-info'), 'has-foto');
+  var login = document.getElementById('login-screen');
+  if (login && labelUrlValid(c.bgAdmin)) login.style.backgroundImage = 'url(' + c.bgAdmin + ')';
   labelTerapkanNama();
 }
 
-// Langsung diterapkan saat halaman dibuka (dari cache) — termasuk di layar login
+// Langsung diterapkan dari cache agar tampilan awal cepat; modal tetap melakukan refresh dari spreadsheet.
 labelTerapkanNama();
 document.addEventListener('DOMContentLoaded', labelTerapkanSemua);
 
@@ -2530,18 +2533,17 @@ function labelInput(key) {
   labelPreview(key, ok ? url : '');
 }
 
-function bukaModalLabel() {
-  var c = labelBaca();
+function labelTampilkanModal(c) {
+  c = c || {};
+  labelTulis(c);
   labelIsiAkunFoto();
   var inNama = document.getElementById('lbl-input-nama');
   if (inNama) inNama.value = c.appName || '';
   labelInputNama();
-  var cl = null;
-  try { cl = JSON.parse(localStorage.getItem('spmbAdminLoginData') || 'null'); } catch (e) {}
   var nilai = {
     logo: c.logo || '',
     foto: labelFotoAkun(c, labelAkunDipilih()),
-    bgAdmin: c.bgAdmin || (cl && cl.bgUrl) || '',
+    bgAdmin: c.bgAdmin || '',
     bgPendaftar: c.bgPendaftar || ''
   };
   ['logo', 'foto', 'bgAdmin', 'bgPendaftar'].forEach(function (k) {
@@ -2549,9 +2551,25 @@ function bukaModalLabel() {
     if (el) el.value = nilai[k];
     labelInput(k);
   });
+  labelTerapkanSemua();
   var modalEl = document.getElementById('modalLabelGambar');
   if (modalEl && window.bootstrap) {
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+}
+
+function bukaModalLabel() {
+  var cached = labelBaca();
+  if (cached && (cached.appName || cached.logo || cached.bgAdmin || cached.bgPendaftar || cached.fotoMap)) labelTampilkanModal(cached);
+  try {
+    google.script.run
+      .withSuccessHandler(function (data) { labelTampilkanModal(data || {}); })
+      .withFailureHandler(function (err) {
+        if (!cached || !Object.keys(cached).length) alert('Gagal memuat konfigurasi Label: ' + (err && err.message ? err.message : err));
+      })
+      .getLabel();
+  } catch (e) {
+    if (!cached || !Object.keys(cached).length) alert('Gagal memuat konfigurasi Label.');
   }
 }
 
@@ -2560,18 +2578,22 @@ function simpanLabel(key) {
   var st  = document.getElementById('lbl-status-' + key);
   var url = String((el || {}).value || '').trim();
   if (!labelUrlValid(url)) return;
-  var c = labelBaca();
-  if (key === 'foto') {
-    var akun = labelAkunDipilih();
-    if (!akun) { if (st) st.textContent = 'Pilih akun terlebih dahulu'; return; }
-    c.fotoMap = c.fotoMap || {};
-    c.fotoMap[akun] = url;
-  } else {
-    c[key] = url;
+  var akun = key === 'foto' ? labelAkunDipilih() : '';
+  if (key === 'foto' && !akun) { if (st) st.textContent = 'Pilih akun terlebih dahulu'; return; }
+  if (st) st.textContent = 'Menyimpan...';
+  try {
+    google.script.run
+      .withSuccessHandler(function (data) {
+        labelTulis(data || {});
+        labelTerapkanSemua();
+        if (st) st.textContent = '✓ Tersimpan di spreadsheet';
+        labelGantiAkunFoto();
+      })
+      .withFailureHandler(function (err) { if (st) st.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : err); })
+      .setLabel({ key: key, url: url, akun: akun });
+  } catch (e) {
+    if (st) st.textContent = 'Gagal menyimpan.';
   }
-  labelTulis(c);
-  if (key === 'logo' || key === 'foto') labelTerapkanSemua();
-  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
 }
 
 // ── Nama Aplikasi (input + simpan) ──
@@ -2588,11 +2610,19 @@ function simpanLabelNama() {
   var st  = document.getElementById('lbl-status-nama');
   var nama = String((el || {}).value || '').trim().replace(/\s+/g, ' ');
   if (!nama) return;
-  var c = labelBaca();
-  c.appName = nama;
-  labelTulis(c);
-  labelTerapkanNama();
-  if (st) st.textContent = '✓ Tersimpan (sementara di browser ini)';
+  if (st) st.textContent = 'Menyimpan...';
+  try {
+    google.script.run
+      .withSuccessHandler(function (data) {
+        labelTulis(data || {});
+        labelTerapkanNama();
+        if (st) st.textContent = '✓ Tersimpan di spreadsheet';
+      })
+      .withFailureHandler(function (err) { if (st) st.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : err); })
+      .setLabel({ key: 'appName', url: nama, akun: '' });
+  } catch (e) {
+    if (st) st.textContent = 'Gagal menyimpan.';
+  }
 }
 
 // ── Pemilih Akun untuk Foto Pengguna ──
@@ -2604,14 +2634,8 @@ function labelIsiAkunFoto() {
   var sel = document.getElementById('lbl-akun-foto');
   if (!sel) return;
   var sebelumnya = sel.value || labelAkunAktif();
-  var daftar = [];
-  var src = document.getElementById('lp-jabatan');
-  if (src) {
-    Array.prototype.forEach.call(src.options, function (o) {
-      var v = String(o.value || '').trim();
-      if (v && daftar.indexOf(v) === -1) daftar.push(v);
-    });
-  }
+  var c = labelBaca();
+  var daftar = Array.isArray(c.akun) ? c.akun.slice() : [];
   var aktif = labelAkunAktif();
   if (aktif && daftar.indexOf(aktif) === -1) daftar.unshift(aktif);
   sel.innerHTML = '';
